@@ -1,0 +1,28 @@
+{
+    "name": "webforge/doctrine",
+    "description": "Doctrine ORM bridge for webforge",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Philipp Scheit",
+            "email": "p.scheit@ps-webforge.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "Webforge\\Doctrine": ["lib/", "tests/"]
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {
+
+    },
+    "require-dev": {
+        "webforge/testplate": "1.2.*@dev"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
