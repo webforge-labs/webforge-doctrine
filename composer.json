@@ -15,10 +15,12 @@
     },
     "minimum-stability": "dev",
     "require": {
-
+        "php": ">=5.3.2",
+        "doctrine/orm": "2.3.*@stable"
     },
     "require-dev": {
-        "webforge/testplate": "1.2.*@dev"
+        "webforge/testplate": "1.2.*@dev",
+        "symfony/console": "2.1.*@stable"
     },
     "extra": {
         "branch-alias": {
