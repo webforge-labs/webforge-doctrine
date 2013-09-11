@@ -14,4 +14,11 @@ class MockerTest extends \Webforge\Code\Test\Base {
   public function testCanCreateAnEntityManager() {
     $this->assertInstanceOf('Doctrine\ORM\EntityManager', $this->mocker->createEntityManager());
   }
+
+  public function testDoesCreateAlwaysAUniqueEntityManager() {
+    $em = $this->mocker->createEntityManager();
+    $em2 = $this->mocker->createEntityManager();
+
+    $this->assertNotSame($em, $em2);
+  }
 }
