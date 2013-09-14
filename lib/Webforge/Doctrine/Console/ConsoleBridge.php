@@ -25,7 +25,8 @@ class ConsoleBridge {
     );
 
     $application->addCommands(array(
-      new ValidateSchemaCommand()
+      new ValidateSchemaCommand(),
+      new ORMUpdateSchemaCommand($this->dcc)
     ));
   }
 }

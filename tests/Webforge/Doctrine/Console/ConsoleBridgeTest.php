@@ -29,5 +29,7 @@ class ConsoleBridgeTest extends \Webforge\Doctrine\Test\Base {
       $this->application->get('orm:validate-schema'), 
       'application has not validate-schema command registered'
     );
+
+    $this->assertInstanceOf('Webforge\Doctrine\Console\AbstractDoctrineCommand', $this->application->get('orm:update-schema'));
   }
 }
