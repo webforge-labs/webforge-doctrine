@@ -3,6 +3,7 @@
 namespace Webforge\Doctrine;
 
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\SchemaTool;
 
 /**
  * A Container for the full configuratino and business objects from the doctrine module
@@ -17,7 +18,20 @@ use Doctrine\ORM\EntityManager;
  */
 class Container {
 
+  /**
+   * @var Doctrine\ORM\EntityManager[]
+   */
   protected $entityManagers;
+
+  /**
+   * @var Webforge\Doctrine\Util
+   */
+  protected $util;
+
+  /**
+   * @var Doctrine\ORM\Tools\SchemaTool[]
+   */
+  protected $schemaTools;
 
   /**
    * @param string $con default is 'default'
@@ -32,10 +46,42 @@ class Container {
     throw new \LogicException('Im not so intelligent right now: EntityManager for '.$con.' was not injected.');
   }
 
+  /**
+   * @return Doctrine\ORM\Tools\SchemaTool
+   */
+  public function getSchemaTool($con) {
+    if (!isset($this->schemaTools[$con])) {
+      return $this->schemaTools[$con] = new SchemaTool($this->getEntityManager($con));
+    }
+
+    return $this->schemaTools[$con];
+  }
+
+  /**
+   * @return Webforge\Doctrine\Util
+   */
+  public function getUtil() {
+    if (!isset($this->util)) {
+      $this->util = new Util($this);
+    }
+
+    return $this->util;
+  }
+
   public function injectEntityManager(EntityManager $em, $con = NULL) {
     if (!isset($con)) $con = 'default';
 
     $this->entityManagers[$con] = $em;
+    return $this;
+  }
+
+  public function injectSchemaTool(SchemaTool $schemaTool, $con) {
+    $this->schemaTools[$con] = $schemaTool;
+    return $this;
+  }
+
+  public function injectUtil(Util $util) {
+    $this->util = $util;
     return $this;
   }
 }

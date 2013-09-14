@@ -14,13 +14,12 @@ class Base extends \Webforge\Code\Test\Base {
   /**
    * @var Webforge\Doctrine\Container
    */
-  protected $container;
+  protected $dcc;
 
   public function setUp() {
     parent::setUp();
 
     $this->mocker = new Mocker($this);
-
-    $this->container = new Container();
+    $this->dcc = new Container();
   }
 }

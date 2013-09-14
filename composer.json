@@ -20,7 +20,8 @@
     },
     "require-dev": {
         "webforge/testplate": "1.2.*@dev",
-        "symfony/console": "2.1.*@stable"
+        "symfony/console": "2.1.*@stable",
+        "mockery/mockery": "dev-master"
     },
     "extra": {
         "branch-alias": {

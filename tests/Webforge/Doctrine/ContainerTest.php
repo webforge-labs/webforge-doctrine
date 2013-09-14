@@ -34,4 +34,30 @@ class ContainerTest extends \Webforge\Doctrine\Test\Base {
       $this->container->getEntityManager('tests')
     );
   }
+
+  public function testCanInstantiateTheUtil() {
+    $this->assertInstanceOf('Webforge\Doctrine\Util', $this->dcc->getUtil());
+  }
+
+  public function testCanCreateASchemaToolForAnEntityManager() {
+    $this->container->injectEntityManager($this->em);
+    $this->assertInstanceOf('Doctrine\ORM\Tools\SchemaTool', $tool1 = $this->container->getSchemaTool('default'));
+  }
+
+  public function testSchemaToolCanBeInjected() {
+    $this->container->injectEntityManager($this->em);
+
+    $schemaTool = $this->mocker->createSchemaTool($this->em);
+    $this->container->injectSchemaTool($schemaTool, 'default');
+
+    $this->assertSame($schemaTool, $this->container->getSchemaTool('default'));
+  }
+
+  public function testUtilCanBeInjected() {
+    $util = $this->getMockBuilder('Webforge\Doctrine\Util')->disableOriginalConstructor()->getMock();
+
+    $this->container->injectUtil($util);
+    
+    $this->assertSame($util, $this->container->getUtil());
+  }
 }

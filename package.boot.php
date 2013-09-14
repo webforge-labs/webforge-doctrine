@@ -114,6 +114,16 @@ class BootLoader {
     return $GLOBALS['env']['container'] = $this->getCMSContainer();
   }
 
+  /**
+   * Registers a reference to the root directory of the package in GLOBALS['env']['root']
+   * 
+   * if Webforge\Comon is loaded this will be an instance, otherwise a string
+   */
+  public function registerPackageRoot() {
+    if (!isset($GLOBALS['env']) || !array_key_exists('root', $GLOBALS['env'])) {
+      return $GLOBALS['env']['root'] = class_exists('Webforge\Common\System\Dir') ? new \Webforge\Common\System\Dir($this->dir) : $this->dir;
+    }
+  }
 
   /**
    * resolves a path to a full path
@@ -160,4 +170,3 @@ class BootLoader {
     return rtrim($path,'/\\').$this->ds;
   }
 }
-?>
