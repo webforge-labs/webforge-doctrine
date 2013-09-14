@@ -27,7 +27,7 @@ class Util {
       apc_clear_cache();
     }
 
-    $tool = $this->dcc->getSchemaTool($this->dcc->getEntityManager($con));
+    $tool = $this->dcc->getSchemaTool($con);
     $classes = $em->getMetadataFactory()->getAllMetadata();
     
     $log = NULL;
