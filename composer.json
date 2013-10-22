@@ -15,12 +15,13 @@
     },
     "minimum-stability": "dev",
     "require": {
-        "php": ">=5.3.2",
-        "doctrine/orm": "2.3.*@stable"
+      "php": ">=5.3.2",
+      "doctrine/orm": "2.3.*@stable"
     },
     "require-dev": {
-        "webforge/testplate": "1.2.*@dev",
-        "symfony/console": "2.1.*@stable",
+        "webforge/webforge": "1.6.*@dev",
+        "webforge/testdata-repository": "*@alpha",
+        "webforge/testplate": ">=1.2@dev",
         "mockery/mockery": "dev-master",
         "liip/rmt": "0.9.*"
     },
