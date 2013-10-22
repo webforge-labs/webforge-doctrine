@@ -26,7 +26,8 @@ abstract class AbstractDoctrineCommand extends SymfonyCommand {
     );
     
     $this->addOption(
-      'dry-run'
+      'dry-run', '', InputOption::VALUE_NONE,
+      'When set not database actions are processed, only output is given'
     );
   }
 
