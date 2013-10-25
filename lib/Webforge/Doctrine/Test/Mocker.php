@@ -49,12 +49,7 @@ class Mocker {
 
     return \Doctrine\Tests\Mocks\EntityManagerMock::create($conn, $config, $eventManager);
   }
-
-  /*
-  public function createEntityManager() {
-    return $this->test->getMockBuilder('Doctrine\ORM\EntityManager')->disableOriginalConstructor()->getMock();
-  }
-  */
+  
 
   public function createSchemaTool(EntityManager $em) {
     return $this->test->getMockBuilder('Doctrine\ORM\Tools\SchemaTool')->disableOriginalConstructor()->getMock();
