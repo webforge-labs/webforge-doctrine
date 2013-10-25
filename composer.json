@@ -24,7 +24,8 @@
         "webforge/testdata-repository": "*@alpha",
         "webforge/testplate": ">=1.2@dev",
         "mockery/mockery": "dev-master",
-        "liip/rmt": "0.9.*"
+        "liip/rmt": "0.9.*",
+        "satooshi/php-coveralls": "dev-master"
     },
     "extra": {
         "branch-alias": {
