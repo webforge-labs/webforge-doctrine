@@ -3,7 +3,6 @@
  * BootPackage for the very basic bootstrapping
  *
  * Psc\Boot\BootLoader
- * Psc\Boot\Exception
  */
 
 namespace Psc\Boot;
@@ -11,22 +10,16 @@ namespace Psc\Boot;
 class Exception extends \Exception {}
 
 /**
- * Eine Klasse die Bootstrapping Prozesse vereinheitlicht
- *
- * egal ob wir vom phar
- * nativ
- * oder in binärForm aufgerufen werden
- *
- * natives PHP!
- *
- * How-To:
- *
- * host-config nicht benutzen:
- * $bootLoader->setHostConfig(new \Psc\CMS\Configuration(array()));
+ * A Class to reduce rendudant code for bootstrapping the main application container
+ * 
+ * autoloading is handled by composer
+ * 
  */
 class BootLoader {
-  
+
   protected $ds = DIRECTORY_SEPARATOR;
+
+  protected $containerClass;
   
   /**
    * Ein Pfad wird relativ zum Verzeichnis des BootLoaders betrachtet
@@ -52,7 +45,7 @@ class BootLoader {
   protected $dir;
   
   /**
-   * @var Psc\CMS\Container
+   * @var {$this->containerClass}
    */
   protected $container;
   
@@ -64,8 +57,9 @@ class BootLoader {
    * e.g.
    * new BootLoader(__DIR__)
    */
-  public function __construct($bootloadDirectory = NULL) {
+  public function __construct($bootloadDirectory = NULL, $containerClass = 'Psc\CMS\Container') {
     $this->dir = $this->ts($bootloadDirectory ?: __DIR__);
+    $this->containerClass = $containerClass;
   }
   
   /**
@@ -92,25 +86,44 @@ class BootLoader {
   }
   
   /**
-   * @return Psc\CMS\Container
+   * @discouraged use getContainer() instead
+   * @return {$this->containerClass}
    */
   public function getCMSContainer() {
+    return $this->getContainer();
+  }
+
+  /**
+   * @return {$this->containerClass}
+   */
+  public function getContainer() {
     if (!isset($this->container)) {
-      $this->container = new \Psc\CMS\Container($this->dir);
+      $container = $this->containerClass;
+      $this->container = new $container($this->dir);
       $this->container->init();
     }
     
     return $this->container;
+
   }
 
   /**
-   * Registers the Psc\CMS\Container as a global object
+   * @discouraged use registerContainer()
+   * @return {$this->containerClass}
+   */
+  public function registerCMSContainer() {
+    return $this->registerContainer();
+  }
+
+  /**
+   * Registers the Container as a global object
    *
    * You need this gloabal object to run PHPUnit-tests with webforge or psc-cms
    * 
-   * @return Psc\CMS\Container
+   * @discouraged use registerContainer()
+   * @return {$this->containerClass}
    */
-  public function registerCMSContainer() {
+  public function registerContainer() {
     return $GLOBALS['env']['container'] = $this->getCMSContainer();
   }
 
@@ -123,6 +136,10 @@ class BootLoader {
     if (!isset($GLOBALS['env']) || !array_key_exists('root', $GLOBALS['env'])) {
       return $GLOBALS['env']['root'] = class_exists('Webforge\Common\System\Dir') ? new \Webforge\Common\System\Dir($this->dir) : $this->dir;
     }
+  }
+
+  public function registerRootDirectory() {
+    return $this->registerPackageRoot();
   }
 
   /**
