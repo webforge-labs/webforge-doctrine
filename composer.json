@@ -20,7 +20,7 @@
       "doctrine/orm": "2.4.*@stable"
     },
     "require-dev": {
-        "webforge/webforge": "1.6.*@dev",
+        "webforge/webforge": "dev-master",
         "webforge/testdata-repository": "*@alpha",
         "webforge/testplate": ">=1.2@dev",
         "mockery/mockery": "dev-master",
