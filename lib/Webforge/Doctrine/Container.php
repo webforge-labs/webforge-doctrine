@@ -4,6 +4,9 @@ namespace Webforge\Doctrine;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
+use Doctrine\ORM\Tools\Setup;
+use InvalidArgumentException;
+use LogicException;
 
 /**
  * A Container for the full configuratino and business objects from the doctrine module
@@ -34,16 +37,45 @@ class Container {
   protected $schemaTools;
 
   /**
+   * @var Doctrine Configuration
+   */
+  protected $configuration;
+
+  /**
+   * @var array
+   */
+  protected $connectionsConfiguration;
+
+  /**
+   * @param array $connectionsConfiguration every array should have the con-name as key and name, password, dbname, host, charset as sub-keys
+   */
+  public function initDoctrine(Array $connectionsConfiguration, Array $entitiesPath, $isDevMode = TRUE) {
+    $this->connectionsConfiguration = $this->normalizeConnections($connectionsConfiguration);
+    
+    $entitiesPath = array_map(
+      function($dir) {
+        return (string) $dir;
+      }, 
+      $entitiesPath
+    );
+    
+    $this->configuration = Setup::createAnnotationMetadataConfiguration($entitiesPath, $isDevMode, $this->getProxyDir(), $this->getCache());
+  }
+
+  /**
    * @param string $con default is 'default'
    */
   public function getEntityManager($con = NULL) {
     if (!isset($con)) $con = 'default';
 
-    if (isset($this->entityManagers[$con])) {
-      return $this->entityManagers[$con];
+    if (!isset($this->entityManagers[$con])) {
+      if (!is_array($this->connectionsConfiguration)) {
+        throw new LogicException('You have to initDoctrine() before you can getEntityManager()');
+      }
+      $this->entityManagers[$con] = EntityManager::create($this->connectionsConfiguration[$con], $this->configuration);
     }
 
-    throw new \LogicException('Im not so intelligent right now: EntityManager for '.$con.' was not injected.');
+    return $this->entityManagers[$con];
   }
 
   /**
@@ -66,6 +98,83 @@ class Container {
     }
 
     return $this->util;
+  }
+
+  protected function normalizeConnections(Array $dbsConfiguration) {
+    $connections = array();
+
+    $requiredParams = array(
+      'user'=>'nes',
+      'password'=>NULL,
+      'host'=>'nes',
+      'dbname'=>'nes', // doctrine style name
+      'driver'=>'nes',
+      'charset'=>'nes'
+    );
+
+    foreach ($dbsConfiguration as $con => $connection) {
+      if (is_array($connection)) {
+        if (array_key_exists('database', $connection)) {
+          $connection['dbname'] = $connection['database'];
+          unset($connection['database']);
+        }
+
+        $config = $connections[$con] = array_replace(
+          array(
+            'host'=>'127.0.0.1',
+            'driver'=>'pdo_mysql',
+            'charset'=>'utf8'
+          ),
+          $connection
+        );
+
+        $invalid = NULL;
+        foreach ($requiredParams as $param => $shouldBe) {
+          if (!array_key_exists($param, $config)) {
+            $invalid .= $param.' is not set in parameters array';
+          } elseif ($shouldBe === 'nes' && mb_strlen(trim($config[$param])) === 0) {
+            $invalid .= $param.' cannot be empty';
+          }
+        }
+
+        if ($invalid) {
+          throw new InvalidArgumentException("Your connection configuration for ".$con." is not complete:\n".$invalid);
+        }
+
+      } else {
+        throw new InvalidArgumentException("Please provide the connectionsConfiguration array in the format array('default'=>array('name'=>'', 'password'=>'', 'dbname'=>'', ...))");
+      }
+    }
+
+    if (count($connections) === 1) {
+      $connections['default'] = current($connection);
+    }
+
+    if(!array_key_exists('default', $connections)) {
+      throw new InvalidArgumentException('Please provide a con with name default in you connectionsConfiguration. You only have: '.implode(', ', array_keys($connections)).' defined');
+    }
+
+    return $connections;
+  }
+
+  /**
+   * Where to write doctrine proxies to
+   * 
+   * if NULL a system tmp dir will be used
+   * @return Dir|NULL
+   */
+  public function getProxyDir() {
+    return NULL;
+  }
+
+  /**
+   * The cache used for doctrine
+   * 
+   * by default this is set to NULL und will be decided for devMode
+   * @see Doctrine/ORM/Tools/Setup which caches can be used
+   */
+  public function getCache() {
+    return NULL;
   }
 
   public function injectEntityManager(EntityManager $em, $con = NULL) {
