@@ -29,7 +29,6 @@ class ContainerConfigurationTest extends \Webforge\Doctrine\Test\Base {
       $this->assertArrayHasKey('user', $config);
       $this->assertNotEmpty($config['user']);
       $this->assertArrayHasKey('password', $config);
-      $this->assertNotEmpty($config['password']);
       $this->assertArrayHasKey('database', $config);
       $this->assertNotEmpty($config['database']);
     }
