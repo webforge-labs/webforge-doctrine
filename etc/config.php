@@ -9,7 +9,7 @@ $conf['db']['default']['charset'] = 'utf8';
 
 if (getenv('TRAVIS') === 'true') {
   $conf['db']['default']['user'] = 'root';
-  $conf['db']['default']['database'] = '';
+  $conf['db']['default']['password'] = '';
 }
 
 $conf['db']['tests'] = $conf['db']['default'];

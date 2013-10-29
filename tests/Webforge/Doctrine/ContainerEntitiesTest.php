@@ -16,7 +16,15 @@ class ContainerEntitiesTest extends \Webforge\Doctrine\Test\SchemaTestCase {
   }
 
   public function testEntityManagerFIndsTheEntyLoadedFromTestFiles() {
-    $this->assertNull($this->em->find('Doctrine\Tests\Models\Company\CompanyCar', 1));
+    $repo = $this->em->getRepository('Doctrine\Tests\Models\Company\CompanyCar');
+
+    foreach ($repo->findAll() as $car) {
+      $this->em->remove($car);
+    }
+    $this->em->flush();
+    $this->em->clear();
+
+    $this->assertNull($repo->find(1));
 
     $car = new CompanyCar('Ford');
     $this->em->persist($car);
@@ -25,7 +33,7 @@ class ContainerEntitiesTest extends \Webforge\Doctrine\Test\SchemaTestCase {
 
     $this->assertInstanceOf(
       'Doctrine\Tests\Models\Company\CompanyCar', 
-      $this->em->find('Doctrine\Tests\Models\Company\CompanyCar', 1)
+      $repo->find($car->getId())
     );
   }
 }
