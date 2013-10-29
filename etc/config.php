@@ -7,6 +7,11 @@ $conf['db']['default']['database'] = $project->isStaging() ? $project->getLowerN
 $conf['db']['default']['port'] = NULL;
 $conf['db']['default']['charset'] = 'utf8';
 
+if (getenv('TRAVIS') === 'true') {
+  $conf['db']['default']['user'] = 'root';
+  $conf['db']['default']['database'] = '';
+}
+
 $conf['db']['tests'] = $conf['db']['default'];
 $conf['db']['tests']['database'] = $project->getLowerName().'_tests';
 
