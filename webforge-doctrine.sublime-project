@@ -1,1 +1,1 @@
-{"folders":[{"path":".","folder_exclude_patterns":["vendo","build"]}]}
+{"folders":[{"path":".","folder_exclude_patterns":["vendor","build"]}]}
