@@ -7,6 +7,7 @@ use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\ORM\Tools\Setup;
 use InvalidArgumentException;
 use LogicException;
+use Webforge\Common\System\Dir;
 
 /**
  * A Container for the full configuratino and business objects from the doctrine module
@@ -47,6 +48,11 @@ class Container {
   protected $connectionsConfiguration;
 
   /**
+   * @var Webforge\Common\System\Dir
+   */
+  protected $proxyDirectory;
+
+  /**
    * @param array $connectionsConfiguration every array should have the con-name as key and name, password, dbname, host, charset as sub-keys
    */
   public function initDoctrine(Array $connectionsConfiguration, Array $entitiesPath, $isDevMode = TRUE) {
@@ -59,7 +65,7 @@ class Container {
       $entitiesPath
     );
     
-    $this->configuration = Setup::createAnnotationMetadataConfiguration($entitiesPath, $isDevMode, $this->getProxyDir(), $this->getCache());
+    $this->configuration = Setup::createAnnotationMetadataConfiguration($entitiesPath, $isDevMode, $this->getProxyDirectory(), $this->getCache());
   }
 
   /**
@@ -147,7 +153,7 @@ class Container {
     }
 
     if (count($connections) === 1) {
-      $connections['default'] = current($connection);
+      $connections['default'] = current($connections);
     }
 
     if(!array_key_exists('default', $connections)) {
@@ -163,8 +169,17 @@ class Container {
    * if NULL a system tmp dir will be used
    * @return Dir|NULL
    */
-  public function getProxyDir() {
-    return NULL;
+  public function getProxyDirectory() {
+    return $this->proxyDirectory;
+  }
+
+  /**
+   * Set where to write doctrine proxies to
+   * @chainable
+   */
+  public function setProxyDirectory(Dir $dir) {
+    $this->proxyDirectory = $dir;
+    return $this;
   }
 
   /**

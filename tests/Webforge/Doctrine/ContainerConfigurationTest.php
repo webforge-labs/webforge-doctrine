@@ -93,6 +93,40 @@ class ContainerConfigurationTest extends \Webforge\Doctrine\Test\Base {
 
     $test(
       array(
+        'default'=>$valid,
+        'tests'=>array(
+          'database'=>'acme-blog',
+          'user'=>'',
+          'password'=>'r0adrunn3r',
+          'driver'=>'pdo_sqlite'
+        )
+      )
+    );
+
+    $test(
+      array(
+        'tests'=>array(
+          'database'=>'acme-blog',
+          'user'=>'',
+          'password'=>'r0adrunn3r',
+          'driver'=>'pdo_sqlite'
+        )
+      )
+    );
+
+    $test(
+      array(
+        'tests'=>array(
+          'database'=>'',
+          'user'=>'roadrunner',
+          'password'=>'r0adrunn3r',
+          'driver'=>NULL
+        )
+      )
+    );
+
+    $test(
+      array(
         'tests'=>$valid,
         'staging'=>$valid
         // default is missing
@@ -136,6 +170,26 @@ class ContainerConfigurationTest extends \Webforge\Doctrine\Test\Base {
     */
   }
 
+  public function testSingleDefaultKeyAcceptanceTest() {
+    $this->container->initDoctrine(
+      array(
+        'default'=>$config = array(
+          'database'=>'acme-blog',
+          'user'=>'acme',
+          'password'=>'r0adrunn3r',
+          'driver'=>'pdo_mysql',
+        )
+      ),
+      $this->entitiesPaths
+    );
+
+    $config['charset'] = 'utf8';
+    $config['host'] = '127.0.0.1';
+    $config['port'] = NULL;
+    $em = $this->container->getEntityManager();
+    $this->assertEntityManagerHasConfig($em, $config, 'default');
+  }
+
   protected function initDefault() {
     $this->container->initDoctrine($this->dbConfigArray, $this->entitiesPaths);
   }
@@ -158,6 +212,15 @@ class ContainerConfigurationTest extends \Webforge\Doctrine\Test\Base {
       'Doctrine\Common\Cache\ArrayCache',
       $this->container->getEntityManager()->getConfiguration()->getMetadataCacheImpl()
     );
+  }
+
+  public function testContainerCanHaveTheProxyDirectoryInjected() {
+    $dir = new Dir(__DIR__.DIRECTORY_SEPARATOR);
+
+    $this->container->setProxyDirectory($dir);
+    $this->assertSame($dir, $this->container->getProxyDirectory());
+
+    // @TODO can we test that doctrine gets it?
   }
 
   protected function assertEntityManagerHasConfig(EntityManager $em, Array $config, $con = 'default') {
