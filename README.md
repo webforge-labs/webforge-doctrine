@@ -1,7 +1,8 @@
 # webforge doctrine
 
-[![Build Status](https://www.travis-ci.org/webforge-labs/webforge-doctrine.png?branch=master)](https://www.travis-ci.org/webforge-labs/webforge-doctrine)
-[![Coverage Status](https://coveralls.io/repos/webforge-labs/webforge-doctrine/badge.png)](https://coveralls.io/r/webforge-labs/webforge-doctrine)
+[![Build Status](https://travis-ci.org/webforge-labs/webforge-doctrine.png)](https://travis-ci.org/webforge-labs/webforge-doctrine)  
+[![Coverage Status](https://coveralls.io/repos/webforge-labs/webforge-doctrine/badge.png?branch=master)](https://coveralls.io/r/webforge-labs/webforge-doctrine?branch=master)  
+[![Latest Stable Version](https://poser.pugx.org/webforge/doctrine/version.png)](https://packagist.org/packages/webforge/doctrine)
 
 Doctrine ORM bridge for webforge
 
