@@ -65,7 +65,7 @@ class Container {
       $entitiesPath
     );
     
-    $this->configuration = Setup::createAnnotationMetadataConfiguration($entitiesPath, $isDevMode, $this->getProxyDirectory(), $this->getCache());
+    $this->configuration = Setup::createAnnotationMetadataConfiguration($entitiesPath, $isDevMode, $this->getProxyDirectory(), $this->getCache(), $useSimpleAnnotationReader = FALSE);
   }
 
   /**
