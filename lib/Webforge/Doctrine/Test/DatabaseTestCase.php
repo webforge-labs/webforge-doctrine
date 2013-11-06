@@ -1,19 +1,16 @@
 <?php
 
-namespace Psc\Doctrine;
+namespace Webforge\Doctrine\Test;
 
-use Psc\Code\Code;
 use Webforge\Common\ArrayUtil AS A;
-use Psc\Doctrine\Helper as DoctrineHelper;
+use Doctrine\DBAL\Logging\EchoSQLLogger;
+use Webforge\Doctrine\Fixtures\FixturesManager;
 
 /**
- * Basisklasse für Datenbanktests
+ * Use this as a starting point for your database tests
  *
- * die Klasse ruft bei Default vor dem ersten Test die Mainfixture auf (und das nur einmal)
- * soll während des Tests die Datenbank neu geladen werden kann der test einfach self::$setupDatabase = TRUE; setzen
- * setUpDatabase() kann überschrieben werden für weitere fixtures
  */
-abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
+abstract class DatabaseTestCase extends \Webforge\Doctrine\Test\SchemaTestCase {
   
   /**
    * Ist dies während der setUp()-Method  == true dann wird die gesetzte Fixture geladen
@@ -28,40 +25,14 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
   protected $backupGlobals = FALSE;
   
   /**
-   * @var string
-   */
-  protected $con = 'tests';
-  
-  /**
-   * @var Psc\Doctrine\DCPackage
-   */
-  protected $dc;
-  
-  /**
-   * @var Psc\Doctrine\Module
-   */
-  protected $module;
-  
-  /**
-   * @var Doctrine\ORM\EntityManager
-   */
-  protected $em;
-
-  /**
    * @var Doctrine\DBAL\Schema\AbstractSchemaManager
    */
   protected $sm;
   
   /**
-   * @var Psc\Doctrine\FixturesManager
+   * @var Webforge\Doctrine\Test\FixturesManager
    */
-  protected $dcFixtures;
-  
-  /**
-   * Set this to add to dcFixtures at setup
-   * @var array
-   */
-  protected $fixtures = NULL;
+  protected $fm;
   
   /**
    *
@@ -75,11 +46,7 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
   public function setUp() {
     parent::setUp();
     
-    $this->module = $this->getModule('Doctrine');
-    $this->setUpModule($this->module);
-    $this->setUpEntityManager();
-    $this->dc = $this->getDoctrinePackage();
-
+    // dcc and em are defined from schematestcase and base
     $this->setUpFixturesManager();
 
     if (self::$setupDatabase) {
@@ -88,62 +55,54 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
     }
   }
 
-  protected function setUpModule($module) {}
+  protected function setUpFixturesManager() {
+    $this->fm = new FixturesManager($this->em);
 
-  protected function setUpEntityManager() {
-    $this->em = $this->module->getEntityManager($this->con, $reset = TRUE, $resetConnection = TRUE);
+    foreach ($this->getFixtures() as $fixture) {
+      $this->fm->add($fixture);
+    }
+  }
+
+  protected function getFixtures() {
+    return array();
   }
 
   /**
-   * Wird nur einmal Pro TestKlasse aufgerufen
-    *
-   * code in setup der sachen aus der Datenbank braucht muss nach parent::setUp() stehen
-   *
-   * setUpDatabase()
+   * Setups the fixtures and the datbase
+   * 
+   * per default this does $this->fm->execute()
+   * you can override this behaviour for your own test
+   * but be aware: this function is called only ONCE in a test-suite
+   * you can trigger further calls to this when you call resetDatabaseOnNextTest
+   * 
+   * here is a log how this would be called:
    *
    * setUp()
+   * setUpDatabase()
    * firstTest()
    * tearDown()
    *
    * setUp()
    * secondTest()
+   * $this->resetDatbaseOnNextTest()
    * tearDown()
    *
    * setUp()
+   * setUpDatabase()
    * thirdTest()
    * tearDown()
    */
   protected function setUpDatabase() {
-    $this->dcFixtures->execute();
-  }
-
-  protected function setUpFixturesManager() {
-    $this->dcFixtures = new FixturesManager($this->em);
-    $this->setUpFixtures();
-  }
-
-  public function setUpFixtures() {
-    if (Code::isTraversable($this->fixtures)) {
-      foreach ($this->fixtures as $fixture) {
-        $this->dcFixtures->add($fixture);
-      }
-    }
+    $this->fm->execute();
   }
   
+  /**
+   * Call this to trigger setUpDatabase for the NEXT test
+   */
   protected function resetDatabaseOnNextTest() {
     self::$setupDatabase = TRUE;
   }
   
-  /**
-   * @return Psc\Doctrine\DCPackage
-   */
-  public function getDoctrinePackage() {
-    if (!isset($this->dc)) {
-      $this->dc = new DCPackage($this->module, $this->em);
-    }
-    return $this->dc;
-  }
-
   /**
    * @return ClassMetadata
    */
@@ -151,27 +110,22 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
     return $this->em->getMetaDataFactory()->getMetadataFor($this->getEntityName($entityName));
   }
   
-  public function getSchemaManager() {
-    if (!isset($this->sm)) {
-      $this->sm = $this->em->getConnection()->getSchemaManager();
-    }
-    
-    return $this->sm;
-  }
-  
   /**
-   * @return Psc\Doctrine\Mocks\EntityManager
+   * @return Doctrine\ORM\EntityManager
    */
   public function getEntityManagerMock() {
-    return $this->doublesManager->createEntityManagerMock($this->module, $this->con);
+    return $this->mocker->createEntityManager();
   }
 
+  /**
+   * Cleanup open transactions
+   */
   protected function onNotSuccessfulTest(\Exception $e) {
     if (isset($this->em) && $this->em->getConnection()->isTransactionActive()) {
       $this->em->getConnection()->rollback();
     }
     
-    parent::onNotSuccessfulTest($e);
+    return parent::onNotSuccessfulTest($e);
   }
   
   
@@ -184,17 +138,25 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
   }
 
   /**
-   * @return string
+   * override this for shorter names in your tests
    */
-  public function getEntityName($shortName) {
-    return $this->module->getEntityName($shortName);
+  protected function getEntityName($shortName) {
+    return $shortName;
   }
 
+  public function getSchemaManager() {
+    if (!isset($this->sm)) {
+      $this->sm = $this->em->getConnection()->getSchemaManager();
+    }
+    
+    return $this->sm;
+  }
+  
   /**
    * @chainable
    */
   public function startDebug() {
-    $this->em->getConnection()->getConfiguration()->setSQLLogger(new \Psc\Doctrine\FlushSQLLogger);
+    $this->em->getConnection()->getConfiguration()->setSQLLogger(new EchoSQLLogger());
     return $this;
   }
   
@@ -206,10 +168,6 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
     return $this;
   }
   
-  public function dump($var, $depth = 3) {
-    \Psc\Doctrine\Helper::dump($var, $depth);
-  }
-  
   /**
    * Hydrates one entity by criterias or by identifier
    * 
@@ -217,7 +175,7 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
    * @return object<$entity>
    */
   public function hydrate($entity, $data) {
-    if (is_array($data) && !A::isNumeric($data)) {// numeric bedeutet composite key (z.b. OID)
+    if (is_array($data) && !A::isNumeric($data)) { // numeric bedeutet composite key (z.b. OID)
       return $this->getRepository($entity)->hydrateBy($data);
     } else {
       return $this->getRepository($entity)->hydrate($data);
@@ -227,12 +185,14 @@ abstract class DatabaseTestCase extends \Psc\Code\Test\HTMLTestCase {
   /* ASSERTIONS */
   
   /**
-   * Asserted 2 Collections mit einem Feld als vergleicher
+   * Asserts that 2 collections are really equal
    */
+  /*
   public function assertCollection($expected, $actual, $compareFieldGetter = 'identifier') {
     $this->assertEquals(DoctrineHelper::map($expected, $compareFieldGetter),
                         DoctrineHelper::map($actual, $compareFieldGetter),
                         'Collections sind nicht gleich'
                        );
   }
+  */
 }

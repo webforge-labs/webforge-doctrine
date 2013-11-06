@@ -14,10 +14,8 @@ class SchemaTestCase extends Base {
   public function setUp() {
     parent::setUp();
 
-    $this->dcc->initDoctrine(
-      $this->frameworkHelper->getBootContainer()->getProject()->getConfiguration()->get(array('db')),
-      $this->entitiesPaths = array($this->getTestDirectory('Entities/'))
-    );
+    $this->initDoctrineContainer();
+    $this->setUpEntityManager();
 
     if (!self::$schemaCreated) {
       $this->dcc->getUtil()->updateSchema('tests', Util::FORCE, $eol = "\n");

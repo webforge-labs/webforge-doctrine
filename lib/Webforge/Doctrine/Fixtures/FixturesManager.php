@@ -6,6 +6,7 @@ use Doctrine\Common\DataFixtures\Loader;
 use Doctrine\Common\DataFixtures\FixtureInterface as DCFixture;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\ORM\EntityManager;
+use RuntimeException;
 
 class FixturesManager {
   
@@ -18,6 +19,10 @@ class FixturesManager {
   
   public function __construct(EntityManager $em) {
     $this->em = $em;
+
+    if (!class_exists('Doctrine\Common\DataFixtures\Executor\ORMExecutor', $autoload=true)) {
+      throw new RuntimeException('To use the fixtures manager you need to install doctrine/data-fixtures: '."\ncomposer require --dev doctrine/data-fixtures:1.0.*@dev");
+    }
   }
   
   public function add(DCFixture $fixture) {
