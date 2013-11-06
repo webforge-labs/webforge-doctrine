@@ -37,3 +37,47 @@ $em = $dcc->getEntityManager('default');
 ```
 
 If your framework provides you with a method to get a Doctrine Container use this, because it will nicely integrate with your other configuration.
+
+## writing entities
+
+write your entities like this:
+
+```php
+<?php
+
+namespace Doctrine\Tests\Models\Company;
+
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * @ORM\Entity
+ * @ORM\Table(name="company_cars")
+ */
+class CompanyCar
+{
+    /**
+     * @ORM\Id @ORM\Column(type="integer")
+     * @ORM\GeneratedValue(strategy="AUTO")
+     */
+    private $id;
+
+    /**
+     * @ORM\Column(type="string", length=50)
+     */
+    private $brand;
+
+    public function __construct($brand = null) {
+        $this->brand = $brand;
+    }
+
+    public function getId() {
+        return $this->id;
+    }
+
+    public function getBrand() {
+        return $this->title;
+    }
+}
+```
+
+be sure to import the `Doctrine\ORM\Mapping` as a namespace and prefix all your annotations. Annotations like `@Entity` will not work because the doctrine container is not using a SimpleAnnotationReader. For more flexibility with other frameorks this behaviour is enforced from webforge/doctrine.
