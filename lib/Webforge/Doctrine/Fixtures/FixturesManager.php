@@ -44,9 +44,9 @@ class FixturesManager {
   public function getExecutor() {
     if (!isset($this->executor)) {
       $this->executor = new ORMExecutor($this->em, $this->getPurger());
-      $log = $this->log;
-      $this->executor->setLogger(function ($msg) use (&$log) {
-        $log .= $msg;
+      $that = $this;
+      $this->executor->setLogger(function ($msg) use ($that) {
+        $that->appendLog($msg);
       });
     }
     
@@ -63,5 +63,10 @@ class FixturesManager {
 
   public function getLog() {
     return $this->log;
+  }
+
+  public function appendLog($msg) {
+    $this->log .= $msg;
+    return $this;
   }
 }

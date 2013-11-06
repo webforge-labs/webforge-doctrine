@@ -35,6 +35,8 @@ class ContainerEntitiesTest extends \Webforge\Doctrine\Test\DatabaseTestCase {
   public function testFixtureCleansTheDBOnSetup() {
     $repo = $this->em->getRepository('Doctrine\Tests\Models\Company\CompanyCar');
     $this->assertNull($repo->find(1));
+
+    $this->assertNotEmpty($this->fm->getLog());
   }
 }
 
