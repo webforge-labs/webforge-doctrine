@@ -39,10 +39,19 @@ class Base extends \Webforge\Code\Test\Base {
   }
 
   protected function initDoctrineContainer() {
+    $this->initEntitiesPaths();
+
     $this->dcc->initDoctrine(
       $this->frameworkHelper->getBootContainer()->getProject()->getConfiguration()->get(array('db')),
-      $this->entitiesPaths = array($this->getTestDirectory('Entities/'))
+      $this->entitiesPaths
     );
+  }
+
+  protected function initEntitiesPaths() {
+    if (!isset($this->entitiesPaths)) {
+      $this->entitiesPaths = array($this->getTestDirectory('Entities/'));
+    }
+    return $this->entitiesPaths;
   }
 
   protected function setUpEntityManager() {
