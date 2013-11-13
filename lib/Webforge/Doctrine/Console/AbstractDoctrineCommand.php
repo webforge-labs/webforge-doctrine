@@ -3,19 +3,19 @@
 namespace Webforge\Doctrine\Console;
 
 use Webforge\Doctrine\Container as DoctrineContainer;
-use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputOption;
+use Webforge\Common\System\System;
 
-abstract class AbstractDoctrineCommand extends SymfonyCommand {
+abstract class AbstractDoctrineCommand extends \Webforge\Console\Command\CommandAdapter {
 
   /**
    * Webforge\Doctrine\Container
    */
   protected $dcc;
 
-  public function __construct(DoctrineContainer $dcc) {
+  public function __construct(DoctrineContainer $dcc, System $system) {
     $this->dcc = $dcc;
-    parent::__construct();
+    parent::__construct($this->name, $system);
   }
 
   protected function configure() {

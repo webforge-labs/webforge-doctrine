@@ -3,10 +3,14 @@
 namespace Webforge\Doctrine\Console;
 
 use Webforge\Doctrine\Util;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Webforge\Console\CommandInput;
+use Webforge\Console\CommandOutput;
+use Webforge\Console\CommandInteraction;
+use Webforge\Common\System\System;
 
 class ORMUpdateSchemaCommand extends AbstractDoctrineCommand {
+
+  protected $name = 'orm:update-schema';
 
   protected function configure() {
     $this
@@ -25,9 +29,9 @@ class ORMUpdateSchemaCommand extends AbstractDoctrineCommand {
     parent::configure();
   }
   
-  protected function execute(InputInterface $input, OutputInterface $output) {
-    $force = ($input->getOption('dry-run') !== TRUE) ? Util::FORCE : NULL;
-    $con = $input->getOption('con');
+  public function doExecute(CommandInput $input, CommandOutput $output, CommandInteraction $interact, System $system) {
+    $force = !$input->getFlag('dry-run') ? Util::FORCE : NULL;
+    $con = $input->getValue('con');
 
     $util = $this->dcc->getUtil();
 
