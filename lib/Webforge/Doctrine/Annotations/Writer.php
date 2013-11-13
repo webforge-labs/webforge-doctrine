@@ -65,6 +65,8 @@ class Writer {
       return $value ? 'true' : 'false';
     } elseif (is_array($value)) {
       return $this->writeArray($value);
+    } elseif (is_numeric($value)) {
+      return $value;
     }
 
     throw new \RuntimeException('Unknown case for value: '.gettype($value));

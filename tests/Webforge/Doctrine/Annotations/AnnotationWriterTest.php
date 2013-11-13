@@ -64,6 +64,9 @@ class AnnotationWriterTest extends \Webforge\Doctrine\Test\Base {
 
     // without values
     $tests[] = '@Column';
+
+    // with integer parameter
+    $tests[] = '@Column(length=210)';
     
     // nested annotation
     $tests[] = '@Table(name="test_tags", uniqueConstraints={@UniqueConstraint(name="label", columns={"label"})})';
