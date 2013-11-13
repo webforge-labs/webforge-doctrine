@@ -20,7 +20,8 @@
       "doctrine/orm": "2.4.*@stable"
     },
     "suggests": {
-        "doctrine/data-fixtures": "to use the database testcase"
+        "doctrine/data-fixtures": "to use the database testcase",
+        "webforge/console": "to use the commands for managing doctrine"
     },
     "require-dev": {
         "webforge/webforge": "dev-master",
