@@ -36,15 +36,15 @@ class ORMUpdateSchemaCommand extends AbstractDoctrineCommand {
     $util = $this->dcc->getUtil();
 
     if ($force == Util::FORCE) {
-      $output->writeln('Updating schema (forced) for connection: '.$con);
+      $output->warn('Updating schema (forced) for connection: '.$con);
     } else {
-      $output->writeln('Printing update schema SQL for Connection: '.$con);
+      $output->msg('Printing update schema SQL for Connection: '.$con);
     }
     
-    $output->writeln($log = $util->updateSchema($con, $force, "\n"));
+    $output->msg($log = $util->updateSchema($con, $force, "\n"));
     
     if ($force !== Util::FORCE && empty($log)) {
-      $output->writeln('nothing to do');
+      $output->msg('nothing to do');
     }
     
     return 0;

@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
 use Doctrine\ORM\Tools\Console\Command\ValidateSchemaCommand;
 use Webforge\Doctrine\Container as DoctrineContainer;
+use Webforge\Common\System\System;
 
 class ConsoleBridge {
 
@@ -14,8 +15,11 @@ class ConsoleBridge {
    */
   protected $dcc;
 
-  public function __construct(DoctrineContainer $dcc) {
+  protected $system;
+
+  public function __construct(DoctrineContainer $dcc, System $system) {
     $this->dcc = $dcc;
+    $this->system = $system;
   }
 
   public function augment($application) {
@@ -26,7 +30,7 @@ class ConsoleBridge {
 
     $application->addCommands(array(
       new ValidateSchemaCommand(),
-      new ORMUpdateSchemaCommand($this->dcc)
+      new ORMUpdateSchemaCommand($this->dcc, $this->system)
     ));
   }
 }
