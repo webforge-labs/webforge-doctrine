@@ -11,7 +11,7 @@ class ConsoleBridgeTest extends \Webforge\Doctrine\Test\Base {
     parent::setUp();
 
     $this->dcc->injectEntityManager($this->mocker->createEntityManager());
-    $this->consoleBridge = new ConsoleBridge($this->dcc);
+    $this->consoleBridge = new ConsoleBridge($this->dcc, $this->frameworkHelper->getSystem());
 
     $this->application = new \Symfony\Component\Console\Application();
   }

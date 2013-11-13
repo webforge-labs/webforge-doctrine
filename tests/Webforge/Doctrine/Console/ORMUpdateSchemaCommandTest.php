@@ -22,7 +22,7 @@ class ORMUpdateSchemaCommandTest extends \Webforge\Doctrine\Test\Base {
 
     $this->application = new Application();
     $this->application->addCommands(array(
-      new ORMUpdateSchemaCommand($this->dcc)
+      new ORMUpdateSchemaCommand($this->dcc, $this->frameworkHelper->getSystem())
     ));
   }
 

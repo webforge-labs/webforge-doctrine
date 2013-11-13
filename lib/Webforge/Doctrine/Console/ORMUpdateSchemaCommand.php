@@ -3,10 +3,14 @@
 namespace Webforge\Doctrine\Console;
 
 use Webforge\Doctrine\Util;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Webforge\Console\CommandInput;
+use Webforge\Console\CommandOutput;
+use Webforge\Console\CommandInteraction;
+use Webforge\Common\System\System;
 
 class ORMUpdateSchemaCommand extends AbstractDoctrineCommand {
+
+  protected $name = 'orm:update-schema';
 
   protected function configure() {
     $this
@@ -25,22 +29,22 @@ class ORMUpdateSchemaCommand extends AbstractDoctrineCommand {
     parent::configure();
   }
   
-  protected function execute(InputInterface $input, OutputInterface $output) {
-    $force = ($input->getOption('dry-run') !== TRUE) ? Util::FORCE : NULL;
-    $con = $input->getOption('con');
+  public function doExecute(CommandInput $input, CommandOutput $output, CommandInteraction $interact, System $system) {
+    $force = !$input->getFlag('dry-run') ? Util::FORCE : NULL;
+    $con = $input->getValue('con');
 
     $util = $this->dcc->getUtil();
 
     if ($force == Util::FORCE) {
-      $output->writeln('Updating schema (forced) for connection: '.$con);
+      $output->warn('Updating schema (forced) for connection: '.$con);
     } else {
-      $output->writeln('Printing update schema SQL for Connection: '.$con);
+      $output->msg('Printing update schema SQL for Connection: '.$con);
     }
     
-    $output->writeln($log = $util->updateSchema($con, $force, "\n"));
+    $output->msg($log = $util->updateSchema($con, $force, "\n"));
     
     if ($force !== Util::FORCE && empty($log)) {
-      $output->writeln('nothing to do');
+      $output->msg('nothing to do');
     }
     
     return 0;
