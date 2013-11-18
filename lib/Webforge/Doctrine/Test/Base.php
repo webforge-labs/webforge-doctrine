@@ -49,9 +49,8 @@ class Base extends \Webforge\Code\Test\Base {
 
   protected function initEntitiesPaths() {
     if (!isset($this->entitiesPaths)) {
-      $this->entitiesPaths = array($this->getTestDirectory('Entities/'));
+      $this->entitiesPaths = array($this->frameworkHelper->getProject()->dir('doctrine-entities'));
     }
-    return $this->entitiesPaths;
   }
 
   protected function setUpEntityManager() {
