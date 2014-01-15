@@ -38,7 +38,7 @@
         },
 
         "directory-locations": {
-            "doctrine-entities": "tests/files/Entities/"
+            "doctrine-entities": "lib/Webforge/Doctrine/Test/Entities/"
         }
     }
 }

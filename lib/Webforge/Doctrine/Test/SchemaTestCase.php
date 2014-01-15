@@ -18,7 +18,7 @@ class SchemaTestCase extends Base {
     $this->setUpEntityManager();
 
     if (!self::$schemaCreated) {
-      $this->dcc->getUtil()->updateSchema('tests', Util::FORCE, $eol = "\n");
+      $this->dcc->getUtil()->updateSchema($this->con, Util::FORCE, $eol = "\n");
 
       self::$schemaCreated = TRUE;
     }

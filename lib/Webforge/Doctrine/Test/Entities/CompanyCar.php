@@ -1,6 +1,6 @@
 <?php
 
-namespace Doctrine\Tests\Models\Company;
+namespace Webforge\Doctrine\Test\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 
@@ -30,6 +30,6 @@ class CompanyCar
     }
 
     public function getBrand() {
-        return $this->title;
+        return $this->brand;
     }
 }

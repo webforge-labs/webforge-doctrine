@@ -2,9 +2,10 @@
 
 namespace Webforge\Doctrine;
 
-use Doctrine\Tests\Models\Company\CompanyCar;
+use Webforge\Doctrine\Test\Entities\CompanyCar;
 use Doctrine\Common\DataFixtures\AbstractFixture;
 use Doctrine\Common\Persistence\ObjectManager;
+use Webforge\Doctrine\Fixtures\EmptyFixture;
 
 class ContainerEntitiesTest extends \Webforge\Doctrine\Test\DatabaseTestCase {
 
@@ -19,7 +20,7 @@ class ContainerEntitiesTest extends \Webforge\Doctrine\Test\DatabaseTestCase {
 
   public function testEntityManagerFIndsTheEntyLoadedFromTestFiles() {
     $this->resetDatabaseOnNextTest();
-    $repo = $this->em->getRepository('Doctrine\Tests\Models\Company\CompanyCar');
+    $repo = $this->em->getRepository('Webforge\Doctrine\Test\Entities\CompanyCar');
 
     $car = new CompanyCar('Ford');
     $this->em->persist($car);
@@ -27,22 +28,15 @@ class ContainerEntitiesTest extends \Webforge\Doctrine\Test\DatabaseTestCase {
     $this->em->clear();
 
     $this->assertInstanceOf(
-      'Doctrine\Tests\Models\Company\CompanyCar', 
+      'Webforge\Doctrine\Test\Entities\CompanyCar', 
       $repo->find($car->getId())
     );
   }
 
   public function testFixtureCleansTheDBOnSetup() {
-    $repo = $this->em->getRepository('Doctrine\Tests\Models\Company\CompanyCar');
+    $repo = $this->em->getRepository('Webforge\Doctrine\Test\Entities\CompanyCar');
     $this->assertNull($repo->find(1));
 
     $this->assertNotEmpty($this->fm->getLog());
-  }
-}
-
-class EmptyFixture extends AbstractFixture {
-
-  public function load(ObjectManager $em) {
-    // do nothing, leave empty
   }
 }

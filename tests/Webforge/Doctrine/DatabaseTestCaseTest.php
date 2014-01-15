@@ -22,7 +22,7 @@ class DatabaseTestCaseTest extends Test\DatabaseTestCase {
 
   protected function getEntityName($shortName) {
     if ($shortName === 'car') {
-      return 'Doctrine\Tests\Models\Company\CompanyCar';
+      return 'Webforge\Doctrine\Test\Entities\CompanyCar';
     }
 
     return parent::getEntityName($shortName);
@@ -43,7 +43,7 @@ class DatabaseTestCaseTest extends Test\DatabaseTestCase {
   }
 
   public function testGetMetadataReturnsMetadataForEntity() {
-    $this->assertInstanceOf('Doctrine\ORM\Mapping\ClassMetadata', $meta = $this->getEntityMetadata('Doctrine\Tests\Models\Company\CompanyCar'));
+    $this->assertInstanceOf('Doctrine\ORM\Mapping\ClassMetadata', $meta = $this->getEntityMetadata('Webforge\Doctrine\Test\Entities\CompanyCar'));
 
   }
 }
