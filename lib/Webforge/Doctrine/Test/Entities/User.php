@@ -9,7 +9,8 @@ use Doctrine\ORM\Mapping AS ORM;
  * 
  * this entity was compiled from Webforge\Doctrine\Compiler
  * @ORM\Entity
- * @ORM\Table(name="users")
+ * @ORM\Table(name="users", uniqueConstraints={@ORM\UniqueConstraint(name="user_email_unique", columns={"email"})})
+ * 
  */
 class User extends CompiledUser {
 }
