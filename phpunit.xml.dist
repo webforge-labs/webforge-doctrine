@@ -19,6 +19,9 @@
     <filter>
       <whitelist>
         <directory suffix=".php">lib/Webforge</directory>
+        <exclude>
+          <directory suffix=".php">lib/Webforge/Doctrine/Test/Entities</directory>
+        </exclude>
       </whitelist>
     </filter>
 
