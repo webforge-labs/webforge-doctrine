@@ -8,6 +8,7 @@ use Doctrine\ORM\Tools\Setup;
 use InvalidArgumentException;
 use LogicException;
 use Webforge\Common\System\Dir;
+use Doctrine\DBAL\Types\Type as DBALType;
 
 /**
  * A Container for the full configuratino and business objects from the doctrine module
@@ -66,6 +67,26 @@ class Container {
     );
     
     $this->configuration = Setup::createAnnotationMetadataConfiguration($entitiesPath, $isDevMode, $this->getProxyDirectory(), $this->getCache(), $useSimpleAnnotationReader = FALSE);
+    $this->registerDefaultTypes();
+  }
+
+  /**
+   * Registers some common types build into Webforge\Doctrine
+   *
+   */
+  protected function registerDefaultTypes() {
+    $types = array(
+      'WebforgeDateTime'=>'Webforge\Doctrine\Types\DateTimeType',
+      'WebforgeDate'=>'Webforge\Doctrine\Types\DateType'
+    );
+
+    foreach ($types as $name => $class) {
+      if (!DBALType::hasType($name)) {
+        DBALType::addType($name, $class);
+      }
+    }
+
+    return $this;
   }
 
   /**

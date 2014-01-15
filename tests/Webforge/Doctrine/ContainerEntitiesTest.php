@@ -6,6 +6,7 @@ use Webforge\Doctrine\Test\Entities\CompanyCar;
 use Doctrine\Common\DataFixtures\AbstractFixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Webforge\Doctrine\Fixtures\EmptyFixture;
+use Doctrine\DBAL\Types\Type as DBALType;
 
 class ContainerEntitiesTest extends \Webforge\Doctrine\Test\DatabaseTestCase {
 
@@ -38,5 +39,10 @@ class ContainerEntitiesTest extends \Webforge\Doctrine\Test\DatabaseTestCase {
     $this->assertNull($repo->find(1));
 
     $this->assertNotEmpty($this->fm->getLog());
+  }
+
+  public function testInitDoctrineRegistersTypes() {
+    $this->assertTrue(DBALType::hasType('WebforgeDateTime'));
+    $this->assertTrue(DBALType::hasType('WebforgeDate'));
   }
 }
