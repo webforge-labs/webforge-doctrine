@@ -4,6 +4,7 @@ namespace Webforge\Doctrine\Test\Entities;
 
 use Webforge\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping AS ORM;
+use Webforge\Common\DateTime\DateTime;
 
 /**
  * Compiled Entity for Webforge\Doctrine\Test\Entities\Post
@@ -55,13 +56,13 @@ abstract class CompiledPost {
   
   /**
    * created
-   * @ORM\Column
+   * @ORM\Column(type="WebforgeDateTime")
    */
   protected $created;
   
   /**
    * modified
-   * @ORM\Column(nullable=true)
+   * @ORM\Column(type="WebforgeDateTime", nullable=true)
    */
   protected $modified;
   
@@ -158,30 +159,30 @@ abstract class CompiledPost {
   }
   
   /**
-   * @param string $created
+   * @param Webforge\Common\DateTime\DateTime $created
    */
-  public function setCreated($created) {
+  public function setCreated(DateTime $created) {
     $this->created = $created;
     return $this;
   }
   
   /**
-   * @return string
+   * @return Webforge\Common\DateTime\DateTime
    */
   public function getCreated() {
     return $this->created;
   }
   
   /**
-   * @param string $modified
+   * @param Webforge\Common\DateTime\DateTime $modified
    */
-  public function setModified($modified = NULL) {
+  public function setModified(DateTime $modified = NULL) {
     $this->modified = $modified;
     return $this;
   }
   
   /**
-   * @return string
+   * @return Webforge\Common\DateTime\DateTime
    */
   public function getModified() {
     return $this->modified;

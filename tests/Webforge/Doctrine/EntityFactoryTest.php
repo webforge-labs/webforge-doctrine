@@ -5,6 +5,7 @@ namespace Webforge\Doctrine;
 use Webforge\Doctrine\Test\Entities\Author;
 use Webforge\Doctrine\Test\Entities\User;
 use Webforge\Doctrine\Test\Entities\Post;
+use Webforge\Common\DateTime\DateTime;
 
 class EntityFactoryTest extends \Webforge\Code\Test\Base {
   
@@ -39,13 +40,13 @@ class EntityFactoryTest extends \Webforge\Code\Test\Base {
 
       // per setter
       'active'=>FALSE,
-      'created'=>'today'
+      'created'=>$now = DateTime::now()
     ));
 
     $this->assertInstanceOf('Webforge\Doctrine\Test\Entities\Post', $post);
     $this->assertSame($author, $post->getAuthor(), 'author');
     $this->assertSame($revisor, $post->getRevisor(), 'revisor');
     $this->assertFalse($post->getActive(), 'active');
-    $this->assertEquals('today', $post->getCreated(), 'created');
+    $this->assertEquals($now, $post->getCreated(), 'created');
   }
 }

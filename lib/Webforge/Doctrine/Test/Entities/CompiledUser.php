@@ -28,7 +28,7 @@ abstract class CompiledUser {
   
   /**
    * special
-   * @ORM\Column
+   * @ORM\Column(nullable=true)
    */
   protected $special;
   
@@ -65,7 +65,7 @@ abstract class CompiledUser {
   /**
    * @param string $special
    */
-  public function setSpecial($special) {
+  public function setSpecial($special = NULL) {
     $this->special = $special;
     return $this;
   }
@@ -77,7 +77,7 @@ abstract class CompiledUser {
     return $this->special;
   }
   
-  public function __construct() {
-
+  public function __construct($email) {
+    $this->email = $email;
   }
 }

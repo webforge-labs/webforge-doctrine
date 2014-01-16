@@ -91,7 +91,8 @@ abstract class CompiledAuthor extends User {
     return $this->revisionedPosts->contains($revisionedPost);
   }
   
-  public function __construct() {
+  public function __construct($email) {
+    parent::__construct($email);
     $this->writtenPosts = new ArrayCollection();
     $this->revisionedPosts = new ArrayCollection();
   }
