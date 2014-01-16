@@ -39,11 +39,6 @@ class ContainerTest extends \Webforge\Doctrine\Test\Base {
     $this->assertInstanceOf('Webforge\Doctrine\Util', $this->dcc->getUtil());
   }
 
-  public function testCanCreateASchemaToolForAnEntityManager() {
-    $this->container->injectEntityManager($this->em);
-    $this->assertInstanceOf('Doctrine\ORM\Tools\SchemaTool', $tool1 = $this->container->getSchemaTool('default'));
-  }
-
   public function testSchemaToolCanBeInjected() {
     $this->container->injectEntityManager($this->em);
 
