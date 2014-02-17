@@ -6,6 +6,7 @@ use stdClass;
 use Doctrine\ORM\Mapping\Annotation;
 use ReflectionObject;
 use Webforge\Types\Type;
+use ReflectionClass;
 
 /**
  *
@@ -30,9 +31,9 @@ class Writer {
    * NameSpacePart  ::= identifier | null | false | true
    * SimpleName     ::= identifier | null | false | true
    *
-   * @param $annotation
+   * @param mixed $annotation can be a Doctrine\ORM\Mapping\Annotation or a class which docblock contains @Annotation
    */
-  public function writeAnnotation(Annotation $annotation) {
+  public function writeAnnotation($annotation) {
     $writtenValues = array();
     
     foreach ($this->extractValues($annotation) as $key => $value) {
@@ -59,6 +60,8 @@ class Writer {
   private function writeValue($value) {
     if ($value instanceof Annotation) {
       return $this->writeAnnotation($value);
+    } elseif (is_object($value) && $this->isAnnotationClass(get_class($value))) {
+      return $this->writeAnnotation($value);
     } elseif (is_string($value)) {
       return sprintf('"%s"', $value);
     } elseif (is_bool($value)) {
@@ -70,6 +73,12 @@ class Writer {
     }
 
     throw new \RuntimeException('Unknown case for value: '.gettype($value));
+  }
+
+  private function isAnnotationClass($fqn) {
+    $reflection = new ReflectionClass($fqn);
+
+    return mb_strpos('@Annotation', $reflection->getDocComment()) !== FALSE;
   }
 
   private function writeArray(Array $values) {
@@ -98,10 +107,10 @@ class Writer {
    *  - just the classname for anontations in the defaultAnnotationNamespace
    *  - the name with an alias (alias\className) for namespaces with an alias
    * 
-   * @param Annotation $annotation
+   * @param mixed $annotation can be a Doctrine\ORM\Mapping\Annotation or a class which docblock contains @Annotation
    * @return string
    */
-  private function writeAnnotationName(Annotation $annotation) {
+  private function writeAnnotationName($annotation) {
     $name = get_class($annotation);
     
     if (isset($this->defaultAnnotationNamespace) && mb_strpos($name, $this->defaultAnnotationNamespace) === 0) {
@@ -117,7 +126,7 @@ class Writer {
     return '\\'.$name;
   }
   
-  private function extractValues(Annotation $annotation) {
+  private function extractValues($annotation) {
     $extractedValues = array();
       
     $annotationReflection = new ReflectionObject($annotation);

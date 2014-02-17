@@ -7,6 +7,7 @@ use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\SimpleAnnotationReader;
 use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Annotations\AnnotationRegistry;
+use JMS\Serializer\Annotation as SerializerAnnotations;
 
 class AnnotationWriterTest extends \Webforge\Doctrine\Test\Base {
   
@@ -20,6 +21,7 @@ class AnnotationWriterTest extends \Webforge\Doctrine\Test\Base {
 
     $this->writer = new Writer();
     $this->writer->setAnnotationNamespaceAlias('Doctrine\ORM\Mapping', 'ORM');
+    $this->writer->setAnnotationNamespaceAlias('JMS\Serializer\Annotation', 'Serializer');
 
     $this->registerAnnotations();
   }
@@ -76,7 +78,7 @@ class AnnotationWriterTest extends \Webforge\Doctrine\Test\Base {
     
     // custom annotation 
     $tests[] = '@\\'.__NAMESPACE__.'\ComplexAnnotation(root1Key="rootValue2", root2Key="rootValue1")';
-    
+
     return array_map(
       function ($annotationString) { 
         return array($annotationString, __CLASS__.'::provideSingleAnnoations');
@@ -95,6 +97,17 @@ class AnnotationWriterTest extends \Webforge\Doctrine\Test\Base {
   protected function registerAnnotations() {
     AnnotationRegistry::registerFile(
       $this->getPackageDir('vendor/')->getFile('doctrine/orm/lib/Doctrine/ORM/Mapping/Driver/DoctrineAnnotations.php')
+    );
+  }
+
+
+  public function testWritesSerializerTransientAnnotations() {
+    $serializeType = new SerializerAnnotations\Type();
+    $serializeType->name = 'string';
+
+    $this->assertEquals(
+      '@Serializer\Type(name="string")',
+      $this->writer->writeAnnotation($serializeType)
     );
   }
 }

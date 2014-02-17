@@ -30,7 +30,8 @@
         "mockery/mockery": "dev-master",
         "liip/rmt": "0.9.*",
         "satooshi/php-coveralls": "dev-master",
-        "doctrine/data-fixtures": "1.0.*@dev"
+        "doctrine/data-fixtures": "1.0.*@dev",
+        "jms/serializer": "0.15.*@stable"
     },
     "extra": {
         "branch-alias": {
