@@ -69,4 +69,8 @@ class FixturesManager {
     $this->log .= $msg;
     return $this;
   }
+
+  public function resetFixtures() {
+    unset($this->loader);
+  }
 }
