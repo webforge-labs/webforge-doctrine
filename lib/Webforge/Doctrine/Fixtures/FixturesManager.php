@@ -33,7 +33,11 @@ class FixturesManager {
   public function execute() {
     return $this->getExecutor()->execute($this->getLoader()->getFixtures());
   }
-  
+
+  public function flush() {
+    $this->em->flush();
+  }
+
   public function getLoader() {
     if (!isset($this->loader)) {
       $this->loader = new Loader();
@@ -52,7 +56,7 @@ class FixturesManager {
     
     return $this->executor;
   }
-  
+
   public function getPurger() {
     if (!isset($this->purger)) {
       $this->purger = new QNDTruncateORMPurger($this->em);
