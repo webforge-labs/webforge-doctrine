@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping AS ORM;
  * Compiled Entity for Webforge\Doctrine\Test\Entities\Author
  * 
  * To change table name or entity repository edit the Webforge\Doctrine\Test\Entities\Author class.
- * @ORM\MappedSuperClass
+ * @ORM\MappedSuperclass
  */
 abstract class CompiledAuthor extends User {
   
@@ -64,7 +64,7 @@ abstract class CompiledAuthor extends User {
   
   public function removeWrittenPost(Post $writtenPost) {
     if ($this->writtenPosts->contains($writtenPost)) {
-        $this->writtenPosts->remove($writtenPost);
+        $this->writtenPosts->removeElement($writtenPost);
     }
     return $this;
   }
@@ -82,7 +82,7 @@ abstract class CompiledAuthor extends User {
   
   public function removeRevisionedPost(Post $revisionedPost) {
     if ($this->revisionedPosts->contains($revisionedPost)) {
-        $this->revisionedPosts->remove($revisionedPost);
+        $this->revisionedPosts->removeElement($revisionedPost);
     }
     return $this;
   }

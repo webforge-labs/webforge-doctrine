@@ -10,7 +10,7 @@ use Webforge\Common\DateTime\DateTime;
  * Compiled Entity for Webforge\Doctrine\Test\Entities\Post
  * 
  * To change table name or entity repository edit the Webforge\Doctrine\Test\Entities\Post class.
- * @ORM\MappedSuperClass
+ * @ORM\MappedSuperclass
  */
 abstract class CompiledPost {
   
@@ -198,7 +198,7 @@ abstract class CompiledPost {
   
   public function removeCategory(Category $category) {
     if ($this->categories->contains($category)) {
-        $this->categories->remove($category);
+        $this->categories->removeElement($category);
         $category->removePost($this);
     }
     return $this;
@@ -217,7 +217,7 @@ abstract class CompiledPost {
   
   public function removeTag(Tag $tag) {
     if ($this->tags->contains($tag)) {
-        $this->tags->remove($tag);
+        $this->tags->removeElement($tag);
     }
     return $this;
   }

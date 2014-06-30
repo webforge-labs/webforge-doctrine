@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping AS ORM;
  * Compiled Entity for Webforge\Doctrine\Test\Entities\User
  * 
  * To change table name or entity repository edit the Webforge\Doctrine\Test\Entities\User class.
- * @ORM\MappedSuperClass
+ * @ORM\MappedSuperclass
  */
 abstract class CompiledUser {
   

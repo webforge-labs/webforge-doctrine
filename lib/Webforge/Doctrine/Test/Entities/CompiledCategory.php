@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping AS ORM;
  * Compiled Entity for Webforge\Doctrine\Test\Entities\Category
  * 
  * To change table name or entity repository edit the Webforge\Doctrine\Test\Entities\Category class.
- * @ORM\MappedSuperClass
+ * @ORM\MappedSuperclass
  */
 abstract class CompiledCategory {
   
@@ -67,7 +67,7 @@ abstract class CompiledCategory {
   
   public function removePost(Post $post) {
     if ($this->posts->contains($post)) {
-        $this->posts->remove($post);
+        $this->posts->removeElement($post);
     }
     return $this;
   }
