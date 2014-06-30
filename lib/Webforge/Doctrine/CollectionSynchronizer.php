@@ -1,0 +1,303 @@
+<?php
+
+namespace Webforge\Doctrine;
+
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\EntityManager;
+use Webforge\Common\ClassUtil;
+
+/**
+ * Synchronizes two collections (one hydrated from database, one given as a deteached $toCollection)
+ * 
+ * the $fromCollection is the previous selected set of entities
+ * the $toCollection is a set of new entities. 
+ * After synchronizing:
+ *   - the entities in $fromCollection but not in $toCollection are deleted
+ *   - the entities in $fromCollection and in $toCollection are updated (merged)
+ *   - the entities in $toCollection but not in $fromCollection are inserted
+ * 
+ */
+class CollectionSynchronizer {
+  
+  protected $uniqueConstraints = array(array('id'));
+
+  protected $repository;
+  protected $factory;
+  protected $em;
+
+  /**
+   * @var Closure
+   */
+  protected $adder, $remover, $setter, $merger;
+
+  protected $queryBuilder, $binds;
+
+  /**
+   * @param $repository the entity repository for the entity in $fromCollection
+   * @param $factory a factory to create inserted items in toCollection
+   */
+  public function __construct(EntityManager $em, EntityRepository $repository, EntityFactory $factory, Closure $adder = NULL, Closure $remover = NULL, Closure $setter = NULL) {
+    $this->em = $em;
+    $this->repository = $repository;
+    $this->factory = $factory;
+
+    if (!isset($adder)) {
+      $adder = function ($entity, $collectionEntity, $toObject) {
+        $shortName = ClassUtil::getClassName(get_class($collectionEntity));
+        $adder = 'add'.$shortName;
+        $entity->$adder($collectionEntity);
+      };
+    }
+    $this->adder = $adder;
+
+    if (!isset($remover)) {
+      $remover = function ($entity, $collectionEntity) {
+        $shortName = ClassUtil::getClassName(get_class($collectionEntity));
+        $remover = 'remove'.$shortName;
+        $entity->$remover($collectionEntity);
+      };
+    }
+    $this->remover = $remover;
+
+    if (!isset($setter)) {
+      $setter = function ($collectionEntity, $property, $value) {
+        $setter = 'set'.ucfirst($property);
+        $collectionEntity->$setter($value);
+      };
+    }
+    $this->setter = $setter;
+
+    if (!isset($merger)) {
+      $merger = function ($entity, $fromObject, $toObject) use ($setter) {
+        foreach ($toObject as $property => $value) {
+          $setter($fromObject, $property, $value);
+        }
+      };
+    }
+    $this->merger = $merger;
+  }
+
+  public function addUniqueConstraint(Array $fieldNames) {
+    $this->uniqueConstraints[] = $fieldNames;
+  }
+
+  public function process($entity, $fromCollection, $toCollection) {
+    // clone fromCollection because this might be modified while insert/delete events
+    $fromCollectionCopy = $fromCollection instanceof \Doctrine\Common\Collections\Collection ? $fromCollection->toArray() : (array) $fromCollection;
+
+    $updates = $inserts = $deletes = array();
+    $index = array();
+    foreach ($toCollection as $toCollectionKey => $toObject) {
+      $fromObject = $this->hydrateUniqueObject($toObject, $toCollectionKey);
+      
+      if ($fromObject === NULL) {
+        $inserts[] = $this->insert($entity, $toObject);
+
+        // inserts do not have to be indexed, they cannot be in $fromCollection (because fromCollection is from universe and hydrateUniqueObject searches in universe)
+      } else {
+        // an matching object was found by the data from $toObject
+        $updates[] = $this->merge($entity, $fromObject, $toObject);
+        
+        $index[$this->hashObject($fromObject)] = TRUE;
+      }
+    }
+    
+    foreach ($fromCollectionCopy as $fromObject) {
+      if (!array_key_exists($this->hashObject($fromObject), $index)) { // object is not an insert or not an update
+        $deletes[] = $this->delete($entity, $fromObject);
+      }
+    }
+
+    return array($inserts, $updates, $deletes);
+  }
+
+  /**
+   * The object is not $fromCollection and new in $toCollection
+   */
+  protected function insert($entity, $toObject) {
+    $insertedEntity = $this->factory->create($toObject);
+    $this->em->persist($insertedEntity);
+
+    $adder = $this->adder;
+    $adder($entity, $insertedEntity, $toObject);
+  }
+
+  /**
+   * The $fromObject should be updated with the values stored in $toObject
+   * 
+   * notice that the element $fromObject does not necessariliy has to be already in the collection of $entity, because it is just hydrated from the universe
+   */
+  protected function merge($entity, $fromObject, $toObject) {
+    $merge = $this->merger;
+    $merge($entity, $fromObject, $toObject);
+
+    $adder = $this->adder;
+    $adder($entity, $fromObject, $toObject);
+  }
+
+  /**
+   * The object is in $fromCollection but not found in $toCollection
+   */
+  protected function delete($entity, $fromObject) {
+    $remover = $this->remover;
+    $remover($entity, $fromObject);
+  }
+  
+  /**
+   * Finds a matching object from the $toObject in $toCollection which is stored in the universe of the $fromCollection
+   *
+   * @returns NULL if no object is found
+   */
+  protected function hydrateUniqueObject($toObject, $toCollectionKey) {
+    if (!isset($this->queryBuilder)) {
+      $qb = $this->repository->createQueryBuilder('entity');
+    
+      /* 
+        create an or for every uniqueConstraint:
+
+        $qb->where($qb->expr()->orX(
+          uniqueConstraintExpression,
+          uniqueConstraintExpression
+        ));
+
+        like:
+         
+        $qb->where($qb->expr()->orX(
+          $qb->expr()->eq('tag.label', ':label'),
+          $qb->expr()->eq('tag.id', ':id')
+        ));
+      
+        (id is an unique constraint and label is an unique constraint)
+      */
+
+      $conditions = $qb->expr()->orX();
+      $binds = array();
+
+      foreach ($this->uniqueConstraints as $fields) {
+        $constraint = $qb->expr()->andX();
+
+        foreach ($fields as $field) {
+          $binds[$field] = TRUE;
+          $constraint->add(
+            $qb->expr()->eq('entity.'.$field, ':'.$field)
+          );
+        }
+
+        $conditions->add($constraint);
+      }
+
+      $qb->where($conditions);
+
+      $this->queryBuilder = $qb;
+      $this->binds = array_keys($binds);
+    } 
+
+    $parameters = array();
+    foreach ($toObject as $key => $value) {
+      $parameters[$key] = $value;
+    }
+
+    if (count($parameters) != count($this->binds)) {
+      throw new \RuntimeException(
+        sprintf("The number of parameters needed for a unique constraint query, does not match for key '%s' in the toCollection. The Query is:\n", $toCollectionKey).
+        $this->queryBuilder->getDQL()."\n".
+        'needed parameters: '.implode(', ', $this->binds)."\n".
+        'given parameters: '.implode(', ', array_keys($parameters))
+      );
+    }
+
+    $query = $this->queryBuilder->getQuery();
+    $query->setParameters($parameters);
+
+    try {
+      return $query->getSingleResult();
+    } catch (\Doctrine\ORM\NoResultException $e) {
+      return NULL;
+    }
+  }
+  
+  
+  /**
+   * Hashes an object from the universe from $fromCollection
+   *
+   * notice that new elements do not need a hash (the return value does not matter)
+   * @return scalar
+   */
+  protected function hashObject($fromObject) {
+    return $fromObject->getId();
+  }
+  
+  
+  /**
+   * Initialisiert die Defaults für alle on* Methoden für das Entity mit der Collection
+   *
+   * ein CollectionSynchronizer kann mehrere Collections eines Types von mehreren Entities synchronisieren wenn jeweils init() für das aktuelle Entity aufgerufen wird
+   *
+   * new Synchronizer();
+   * foreach ($articles as $article) {
+   *   $synchronizer->init($article);
+   *
+   *   $synchronizer->process($article->getTags(), $formData[$article->getId()]);
+   * }
+   */
+  public function init(Entity $entity) {
+    parent::init($entity);
+    
+    $hydrator = $this->hydrator;
+    $factory = $this->factory;
+    $repository = $hydrator->getRepository();
+    $identifier = $factory->getEntityMeta()->getIdentifier();
+    $skipFields = array();
+    if ($identifier->isAutogeneratedValue()) {
+      $skipFields[$identifier->getName()] = TRUE;
+    }
+    
+    list($add, $remove) = $this->getRelationInterface();
+    
+    // hydrate
+    $this->onHydrate(function ($toObject) use ($hydrator) {
+      return $hydrator->getEntity((array) $toObject); // convention: $field=>value für alle unique constraint-felder
+    });
+
+    // hash
+    $this->onHash(function (Entity $entity) {
+      return $entity->getIdentifier();
+    });
+
+    // insert
+    $this->onInsert(function ($toObject) use ($factory, $repository, $entity, $add, $skipFields) {
+      $factory->reset();
+      foreach ($toObject as $field => $value) {
+        if (!array_key_exists($field,$skipFields))
+          $factory->set($field, $value);
+      }
+      
+      $collectionEntity = $factory->getEntity();
+      
+      $entity->$add($collectionEntity);
+      $repository->persist($collectionEntity);
+    });
+
+
+    // update (merge)
+    $this->onUpdate(function (Entity $collectionEntity, $toObject) use ($repository, $entity, $add, $skipFields) {
+      foreach ($toObject as $field => $value) {
+        if (!array_key_exists($field,$skipFields)) {
+          $collectionEntity->callSetter($field, $value);
+        }
+      }
+      
+      $entity->$add($collectionEntity);
+      $repository->persist($collectionEntity);
+    });
+    
+    
+    // delete
+    $this->onDelete(function (Entity $collectionEntity) use ($entity, $remove) {
+      $entity->$remove($collectionEntity);
+      // wenn tag 0 verknüpfungen hat, könnte man es hier auch löschen
+    });
+    
+    return $this;
+  }
+}
