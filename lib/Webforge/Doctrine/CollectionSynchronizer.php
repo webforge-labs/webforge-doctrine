@@ -5,6 +5,9 @@ namespace Webforge\Doctrine;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\EntityManager;
 use Webforge\Common\ClassUtil;
+use LogicException;
+use RuntimeException;
+use Closure;
 
 /**
  * Synchronizes two collections (one hydrated from database, one given as a deteached $toCollection)
@@ -31,6 +34,35 @@ class CollectionSynchronizer {
   protected $adder, $remover, $setter, $merger;
 
   protected $queryBuilder, $binds;
+
+  /**
+   * @param string $entityFQN provide the FQN of the entity where the $fromCollection is in
+   * @param string $collectionProperty provide the name of the property in the class from $entityFQN which is passed as $fromCollection
+   */
+  public static function createFor($entityFQN, $collectionProperty, EntityManager $em) {
+    $entityMeta = $em->getMetaDataFactory()->getMetadataFor($entityFQN);
+    $mapping = $entityMeta->getAssociationMapping($collectionProperty);
+
+    $collectionEntityFQN = $mapping['targetEntity'];
+
+    if (!$mapping['isOwningSide']) {
+      throw new LogicException(
+        sprintf('The collection %s::%s is not the owningSide from the assocation with targetEntity %s. Synchronizing this side won\'t work', $entityFQN, $collectionProperty, $collectionEntityFQN)
+      );
+    }
+
+    // @TODO we could read the unique constraints from the entityMeta of the $collectionEntityFQN
+    // @TODO we could read the identifier from the entityMeta of the collectionEntityFQN
+    // getIdentifierFieldNames()
+
+    $synchronizer = new CollectionSynchronizer(
+      $em,
+      $em->getRepository($collectionEntityFQN),
+      new EntityFactory($collectionEntityFQN)
+    );
+
+    return $synchronizer;
+  }
 
   /**
    * @param $repository the entity repository for the entity in $fromCollection
@@ -90,7 +122,7 @@ class CollectionSynchronizer {
     $updates = $inserts = $deletes = array();
     $index = array();
     foreach ($toCollection as $toCollectionKey => $toObject) {
-      $fromObject = $this->hydrateUniqueObject($toObject, $toCollectionKey);
+      $fromObject = $this->hydrateUniqueObject($toObject, $toCollectionKey, $entity);
       
       if ($fromObject === NULL) {
         $inserts[] = $this->insert($entity, $toObject);
@@ -150,7 +182,36 @@ class CollectionSynchronizer {
    *
    * @returns NULL if no object is found
    */
-  protected function hydrateUniqueObject($toObject, $toCollectionKey) {
+  protected function hydrateUniqueObject($toObject, $toCollectionKey, $entity) {
+    if (isset($this->hydrator)) {
+      $hydrate = $this->hydrator;
+      return $hydrate($toObject, $this->repository, $entity, $toCollectionKey);
+    } else {
+      return $this->hydrateByUniqueConstraints($toObject, $toCollectionKey);
+    }
+  }
+  
+  /**
+   * @param Closure $hydrator function(array|stdClass $toObject, $repository from the collectionEntity, $entity, $toCollectionKey)
+   */
+  public function setHydrator(Closure $hydrator) {
+    $this->hydrator = $hydrator;
+  }
+  
+  /**
+   * Hashes an object from the universe from $fromCollection
+   *
+   * notice that new elements do not need a hash (the return value does not matter)
+   * @return scalar
+   */
+  protected function hashObject($fromObject) {
+    return $fromObject->getId();
+  }
+
+  /**
+   * @return entity|NULL
+   */
+  protected function hydrateByUniqueConstraints($toObject, $toCollectionKey) {
     if (!isset($this->queryBuilder)) {
       $qb = $this->repository->createQueryBuilder('entity');
     
@@ -200,7 +261,7 @@ class CollectionSynchronizer {
     }
 
     if (count($parameters) != count($this->binds)) {
-      throw new \RuntimeException(
+      throw new RuntimeException(
         sprintf("The number of parameters needed for a unique constraint query, does not match for key '%s' in the toCollection. The Query is:\n", $toCollectionKey).
         $this->queryBuilder->getDQL()."\n".
         'needed parameters: '.implode(', ', $this->binds)."\n".
@@ -216,16 +277,5 @@ class CollectionSynchronizer {
     } catch (\Doctrine\ORM\NoResultException $e) {
       return NULL;
     }
-  }
-  
-  
-  /**
-   * Hashes an object from the universe from $fromCollection
-   *
-   * notice that new elements do not need a hash (the return value does not matter)
-   * @return scalar
-   */
-  protected function hashObject($fromObject) {
-    return $fromObject->getId();
   }
 }

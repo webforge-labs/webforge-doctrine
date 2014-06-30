@@ -13,15 +13,25 @@ class CollectionSynchronizerTest extends \Webforge\Doctrine\Test\DatabaseTestCas
   public function setUp() {
     parent::setUp();
 
-    $this->synchronizer = new CollectionSynchronizer(
-      $this->em,
-      $this->em->getRepository('Webforge\Doctrine\Test\Entities\Tag'),
-      new EntityFactory('Webforge\Doctrine\Test\Entities\Tag')
+    $this->synchronizer = CollectionSynchronizer::createFor(
+      'Webforge\Doctrine\Test\Entities\Post',
+      'tags',
+      $this->em
     );
   }
   
   protected function getFixtures() {
     return array(new EmptyFixture());
+  }
+
+  public function testCreateForWarnsForNonOwningSideCollections() {
+    $this->setExpectedException('LogicException', 'The collection Webforge\Doctrine\Test\Entities\Category::posts is not the owningSide');
+
+    CollectionSynchronizer::createFor(
+      'Webforge\Doctrine\Test\Entities\Category',
+      'posts',
+      $this->em
+    );
   }
 
   public function testProcessingWithMissingToCollectionFieldsForUniqueHydration() {
@@ -38,6 +48,7 @@ class CollectionSynchronizerTest extends \Webforge\Doctrine\Test\DatabaseTestCas
   }
 
   public function testProcessingWithRemovingUpdatingAndInsertingIntoFromCollection() {
+    $this->resetDatabaseOnNextTest();
     list($post, $tags) = $this->createPostWithTags(array('usa', 'germany', 'nsa'));
 
     $toCollection = Array(
@@ -53,6 +64,35 @@ class CollectionSynchronizerTest extends \Webforge\Doctrine\Test\DatabaseTestCas
 
     $this->assertSynchronizedTags($post, array('usa', 'election', 'white-house'));
   }
+
+  public function testProcessingWithOwnHydration() {
+    $this->resetDatabaseOnNextTest();
+
+    list($post, $tags) = $this->createPostWithTags(array());
+
+    $toCollection = Array(
+      array('id'=>$tags->usa->getId(), 'label'=>'usa'), // update (no change)
+    );
+
+    $this->synchronizer->addUniqueConstraint(array('label'));
+
+    $test = $this;
+    $wasCalled = FALSE;
+    $this->synchronizer->setHydrator(function($toObject, \Doctrine\ORM\EntityRepository $repository, $entity) use ($test, $toCollection, $post, &$wasCalled) {
+      $wasCalled = TRUE;
+      $test->assertEquals($toCollection[0], $toObject, 'toObject is passed to hydrator');
+      $test->assertSame($post, $entity, 'post is passed as entity');
+
+      // remember that $tags is detached in test here
+      return $repository->findOneBy(array('label'=>$toObject['label']));
+    });
+
+    $this->synchronizer->process($post, $post->getTags(), $toCollection);
+
+    $this->assertTrue($wasCalled, 'the hydrator set to synchronizer with setHydrator should be used while processing a non empty toCollection');
+    $this->assertSynchronizedTags($post, array('usa'));
+  }
+
 
   protected function createTags() {
     $tags = array();
@@ -75,6 +115,7 @@ class CollectionSynchronizerTest extends \Webforge\Doctrine\Test\DatabaseTestCas
     return $post;
   }
 
+  // note: $tags are detached after createPostWithTags
   protected function createPostWithTags(array $labels) {
     $post = $this->createPost();
     $tags = $this->createTags();
