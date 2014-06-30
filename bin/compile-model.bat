@@ -1,0 +1,1 @@
+webforge-doctrine-compiler orm:compile etc\test-model.json lib\
