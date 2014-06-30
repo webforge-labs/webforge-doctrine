@@ -47,7 +47,7 @@ class CollectionSynchronizer {
 
     if (!$mapping['isOwningSide']) {
       throw new LogicException(
-        sprintf('The collection %s::%s is not the owningSide from the assocation with targetEntity %s. Synchronizing this side won\'t work', $entityFQN, $collectionProperty, $collectionEntityFQN)
+        sprintf('The collection %s::%s is not the owningSide from the assocation %s <=> %s. Synchronizing this side won\'t work', $entityFQN, $collectionProperty, $entityFQN, $collectionEntityFQN)
       );
     }
 
