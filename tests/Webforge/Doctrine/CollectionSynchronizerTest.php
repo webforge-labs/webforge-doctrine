@@ -57,9 +57,7 @@ class CollectionSynchronizerTest extends \Webforge\Doctrine\Test\DatabaseTestCas
   protected function createTags() {
     $tags = array();
     foreach (array('usa', 'whitehouse', 'germany', 'nsa') as $key => $label) {
-      $id = $key+1;
       $tags[$label] = $tag = new Tag($label);
-      $tag->setId($id);
 
       $this->em->persist($tag);
     }
