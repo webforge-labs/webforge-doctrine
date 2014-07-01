@@ -25,12 +25,14 @@ abstract class CompiledPost {
   /**
    * author
    * @ORM\ManyToOne(targetEntity="Webforge\Doctrine\Test\Entities\Author", inversedBy="writtenPosts")
+   * @ORM\JoinColumn(nullable=false)
    */
   protected $author;
   
   /**
    * revisor
    * @ORM\ManyToOne(targetEntity="Webforge\Doctrine\Test\Entities\Author", inversedBy="revisionedPosts")
+   * @ORM\JoinColumn
    */
   protected $revisor;
   
@@ -85,6 +87,9 @@ abstract class CompiledPost {
    * @param Webforge\Doctrine\Test\Entities\Author $author
    */
   public function setAuthor(Author $author) {
+    if (isset($this->author) && $this->author !== $author) {
+        $this->author->removeWrittenPost($this);
+    }
     $this->author = $author;
     $author->addWrittenPost($this);
     return $this;
@@ -101,8 +106,13 @@ abstract class CompiledPost {
    * @param Webforge\Doctrine\Test\Entities\Author $revisor
    */
   public function setRevisor(Author $revisor = NULL) {
+    if (isset($this->revisor) && $this->revisor !== $revisor) {
+        $this->revisor->removeRevisionedPost($this);
+    }
     $this->revisor = $revisor;
-    $revisor->addRevisionedPost($this);
+    if (isset($revisor)) {
+        $revisor->addRevisionedPost($this);
+    }
     return $this;
   }
   

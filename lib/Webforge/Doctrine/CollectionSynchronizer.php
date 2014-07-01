@@ -8,6 +8,7 @@ use Webforge\Common\ClassUtil;
 use LogicException;
 use RuntimeException;
 use Closure;
+use Doctrine\ORM\Mapping\ClassMetadata;
 
 /**
  * Synchronizes two collections (one hydrated from database, one given as a deteached $toCollection)
@@ -45,20 +46,37 @@ class CollectionSynchronizer {
 
     $collectionEntityFQN = $mapping['targetEntity'];
 
-    if (!$mapping['isOwningSide']) {
+    $isOneToMany = $mapping['type'] === ClassMetadata::ONE_TO_MANY;
+
+    if (!$mapping['isOwningSide'] && !$isOneToMany) {
       throw new LogicException(
         sprintf('The collection %s::%s is not the owningSide from the assocation %s <=> %s. Synchronizing this side won\'t work', $entityFQN, $collectionProperty, $entityFQN, $collectionEntityFQN)
       );
+    }
+
+    $adder = $remover = NULL;
+    if ($isOneToMany) {
+      $set = 'set'.ucfirst($mapping['mappedBy']);
+
+      $adder = function ($entity, $collectionEntity, $toObject) use($set) {
+        $collectionEntity->$set($entity);
+      };
+
+      $remover = function ($entity, $collectionEntity) use ($set) {
+        $collectionEntity->$set(NULL);
+      };
     }
 
     // @TODO we could read the unique constraints from the entityMeta of the $collectionEntityFQN
     // @TODO we could read the identifier from the entityMeta of the collectionEntityFQN
     // getIdentifierFieldNames()
 
-    $synchronizer = new CollectionSynchronizer(
+    $synchronizer = new static(
       $em,
       $em->getRepository($collectionEntityFQN),
-      new EntityFactory($collectionEntityFQN)
+      new EntityFactory($collectionEntityFQN),
+      $adder,
+      $remover
     );
 
     return $synchronizer;
@@ -68,7 +86,7 @@ class CollectionSynchronizer {
    * @param $repository the entity repository for the entity in $fromCollection
    * @param $factory a factory to create inserted items in toCollection
    */
-  public function __construct(EntityManager $em, EntityRepository $repository, EntityFactory $factory, Closure $adder = NULL, Closure $remover = NULL, Closure $setter = NULL) {
+  protected function __construct(EntityManager $em, EntityRepository $repository, EntityFactory $factory, Closure $adder = NULL, Closure $remover = NULL, Closure $setter = NULL) {
     $this->em = $em;
     $this->repository = $repository;
     $this->factory = $factory;
