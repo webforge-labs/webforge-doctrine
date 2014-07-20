@@ -75,6 +75,7 @@ class FixturesManager {
   }
 
   public function resetFixtures() {
+    unset($this->executor); // to reset the reference repository as well
     unset($this->loader);
   }
 }
