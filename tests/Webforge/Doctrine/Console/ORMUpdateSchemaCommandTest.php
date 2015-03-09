@@ -17,8 +17,8 @@ class ORMUpdateSchemaCommandTest extends \Webforge\Doctrine\Test\Base {
       $this->util = m::mock('Webforge\Doctrine\Util', array($this->dcc))
     );
 
-    $this->dcc->injectEntityManager($this->mocker->createEntityManager(), 'tests');
-    $this->dcc->injectEntityManager($this->mocker->createEntityManager(), 'default');
+    $this->dcc->injectEntityManager($this->mocker->createEntityManager(array('database'=>'db_tests')), 'tests');
+    $this->dcc->injectEntityManager($this->mocker->createEntityManager(array('database'=>'db_default')), 'default');
 
     $this->application = new Application();
     $this->application->addCommands(array(
@@ -32,7 +32,9 @@ class ORMUpdateSchemaCommandTest extends \Webforge\Doctrine\Test\Base {
       ->once()
       ->with('tests', NULL, m::any());
 
-    $this->execute('orm:update-schema', array('--con'=>'tests', '--dry-run'=>TRUE));
+    $output = $this->execute('orm:update-schema', array('--con'=>'tests', '--dry-run'=>TRUE));
+
+    $this->assertContains('Printing update schema SQL for con: tests connected with: db_tests', $output);
   }
 
   public function testWithDefaultsRunSubmitsForceAnUsesTheNormalConnection() {

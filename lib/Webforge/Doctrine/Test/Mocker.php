@@ -18,9 +18,13 @@ class Mocker {
    *
    * @return Doctrine\ORM\EntityManager
    */
-  public function createEntityManager($eventManager = NULL) {
+  public function createEntityManager(Array $connectionConfig = array()) {
     $em = m::mock('Doctrine\ORM\EntityManager');
     $connection = m::mock('Doctrine\DBAL\Connection');
+
+    if (isset($connectionConfig['database'])) {
+      $connection->shouldReceive('getDatabase')->byDefault()->andReturn($connectionConfig['database']);
+    }
 
     $em->shouldReceive('getConnection')->byDefault()->andReturn($connection);
 

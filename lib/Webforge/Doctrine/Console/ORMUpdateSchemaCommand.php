@@ -40,7 +40,7 @@ class ORMUpdateSchemaCommand extends AbstractDoctrineCommand {
     if ($force == Util::FORCE) {
       $output->warn(sprintf('Updating schema (forced) for con: %s connected with: %s', $con, $database));
     } else {
-      $output->msg(sprintf('Printing update schema SQL for con: %s connected with: %s ', $con, $database));
+      $output->msg(sprintf('Printing update schema SQL for con: %s connected with: %s', $con, $database));
     }
     
     $output->msg($log = $util->updateSchema($con, $force, "\n"));
