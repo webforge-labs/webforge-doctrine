@@ -213,6 +213,7 @@ class Container {
     return NULL;
   }
 
+  // used in psc-cms
   public function injectEntityManager(EntityManager $em, $con = NULL) {
     if (!isset($con)) $con = 'default';
 
@@ -220,6 +221,7 @@ class Container {
     return $this;
   }
 
+  // used in psc-cms
   public function injectSchemaTool(SchemaTool $schemaTool, $con) {
     $this->schemaTools[$con] = $schemaTool;
     return $this;
