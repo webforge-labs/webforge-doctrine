@@ -78,7 +78,7 @@ class Writer {
   private function isAnnotationClass($fqn) {
     $reflection = new ReflectionClass($fqn);
 
-    return mb_strpos('@Annotation', $reflection->getDocComment()) !== FALSE;
+    return mb_strpos($reflection->getDocComment(), '@Annotation') !== FALSE;
   }
 
   private function writeArray(Array $values) {
