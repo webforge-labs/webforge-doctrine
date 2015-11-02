@@ -40,7 +40,7 @@ class CollectionSynchronizer {
    * @param string $entityFQN provide the FQN of the entity where the $fromCollection is in
    * @param string $collectionProperty provide the name of the property in the class from $entityFQN which is passed as $fromCollection
    */
-  public static function createFor($entityFQN, $collectionProperty, EntityManager $em) {
+  public static function createFor($entityFQN, $collectionProperty, EntityManager $em, Array $options = array()) {
     $entityMeta = $em->getMetaDataFactory()->getMetadataFor($entityFQN);
     $mapping = $entityMeta->getAssociationMapping($collectionProperty);
 
@@ -62,9 +62,21 @@ class CollectionSynchronizer {
         $collectionEntity->$set($entity);
       };
 
-      $remover = function ($entity, $collectionEntity) use ($set) {
-        $collectionEntity->$set(NULL);
-      };
+
+      if (isset($options['deleteOnManySide'])) {
+        $remover = function ($entity, $collectionEntity) use ($set, $em) {
+          $shortName = ClassUtil::getClassName(get_class($collectionEntity));
+          $remover = 'remove'.$shortName;
+
+          $entity->$remover($collectionEntity);
+
+          $em->remove($collectionEntity);
+        };
+      } else {
+        $remover = function ($entity, $collectionEntity) use ($set) {
+          $collectionEntity->$set(NULL);
+        };
+      }
     }
 
     // @TODO we could read the unique constraints from the entityMeta of the $collectionEntityFQN
