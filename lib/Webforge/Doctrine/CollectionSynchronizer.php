@@ -58,7 +58,7 @@ class CollectionSynchronizer {
     if ($isOneToMany) {
       $set = 'set'.ucfirst($mapping['mappedBy']);
 
-      $adder = function ($entity, $collectionEntity, $toObject) use($set) {
+      $adder = function ($entity, $collectionEntity, $toObject) use ($set) {
         $collectionEntity->$set($entity);
       };
 
@@ -86,7 +86,7 @@ class CollectionSynchronizer {
    * @param $repository the entity repository for the entity in $fromCollection
    * @param $factory a factory to create inserted items in toCollection
    */
-  protected function __construct(EntityManager $em, EntityRepository $repository, EntityFactory $factory, Closure $adder = NULL, Closure $remover = NULL, Closure $setter = NULL) {
+  protected function __construct(EntityManager $em, EntityRepository $repository, EntityFactory $factory, Closure $adder = NULL, Closure $remover = NULL, Closure $setter = NULL, Closure $merger = NULL) {
     $this->em = $em;
     $this->repository = $repository;
     $this->factory = $factory;
@@ -118,11 +118,11 @@ class CollectionSynchronizer {
     $this->setter = $setter;
 
     if (!isset($merger)) {
-      $merger = function ($entity, $fromObject, $toObject) use ($setter) {
+      $merger = function ($entity, $collectionEntity, $toObject) use ($setter) {
         foreach ($toObject as $property => $value) {
           if ($property === 'id') continue; // dont update id in any case
 
-          $setter($fromObject, $property, $value);
+          $setter($collectionEntity, $property, $value);
         }
       };
     }
@@ -210,10 +210,40 @@ class CollectionSynchronizer {
   }
   
   /**
+   * Sets the mechanism to retrieve synched collection-entities
+   * 
    * @param Closure $hydrator function(array|stdClass $toObject, $repository from the collectionEntity, $entity, $toCollectionKey)
    */
   public function setHydrator(Closure $hydrator) {
     $this->hydrator = $hydrator;
+  }
+
+  /**
+   * Sets the adder procedure
+   * 
+   * @param Closure $adder function ($entity, $collectionEntity, array|stdClass $toObject) where $collectionEntity is an entity that is added to the synchronzied collection in $entity
+   */
+  public function setAdder(Closure $adder) {
+    $this->adder = $adder;
+  }
+
+  /**
+   * Set the remover procedure
+   * 
+   * @param Closure $remover function ($entity, $collectionEntity) should remove $collectionEntity from the synchronized collection of $entity
+   */
+  public function setRemover(Closure $remover) {
+    $this->remover = $remover;
+  }
+
+  /**
+   * Sets the merger procedure
+   * 
+   * @param Closure $merger function ($entity, $collectionEntity, stdClass $toObject) should merge the infos in $toObject to $collectionEntity
+   * it is not necesserary to add the collectionEntity in $entity
+   */
+  public function setMerger(Closure $merger) {
+    $this->merger = $merger;
   }
   
   /**

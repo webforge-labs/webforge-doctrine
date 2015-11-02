@@ -93,6 +93,45 @@ class CollectionSynchronizerTest extends \Webforge\Doctrine\Test\DatabaseTestCas
     $this->assertSynchronizedTags($post, array('usa'));
   }
 
+  public function testOverwritingRemoverAndAdderAndMerger() {
+    $this->resetDatabaseOnNextTest();
+    $this->synchronizer->addUniqueConstraint(array('label'));
+
+    list($post, $tags) = $this->createPostWithTags(array('nsa', 'usa', 'whitehouse', 'germany'));
+
+    $toCollection = Array(
+      array('id'=>NULL, 'label'=>'scottland'), // new
+      array('id'=>$tags->usa->getId(), 'label'=>'usa'), // update (no change)
+    );
+
+    $adderCalled = $removerCalled = $mergerCalled = 0;
+    $that = $this;
+    $this->synchronizer->setAdder(function ($entity, $collectionEntity, $toObject) use (&$adderCalled, $that, $post) {
+      $that->assertSame($post, $entity);
+      $that->assertInstanceOf('Webforge\Doctrine\Test\Entities\Tag', $collectionEntity);
+      $adderCalled++;
+    });
+
+    $this->synchronizer->setRemover(function ($entity, $collectionEntity) use (&$removerCalled, $that, $post) {
+      $that->assertSame($post, $entity);
+      $that->assertInstanceOf('Webforge\Doctrine\Test\Entities\Tag', $collectionEntity);
+      $removerCalled++;
+    });
+
+    $this->synchronizer->setMerger(function ($entity, $collectionEntity, $toObject) use (&$mergerCalled, $that, $post) {
+      $that->assertSame($post, $entity);
+      $that->assertInstanceOf('Webforge\Doctrine\Test\Entities\Tag', $collectionEntity);
+      $that->assertEquals('usa', $collectionEntity->getLabel());
+      $that->assertEquals('usa', $toObject['label']);
+      $mergerCalled++;
+    });
+
+    $this->synchronizer->process($post, $post->getTags(), $toCollection);
+
+    $this->assertEquals(2, $adderCalled, 'adder calltimes'); // one time: for the merger, second time for the adder
+    $this->assertEquals(3, $removerCalled, 'remover calltimes');
+    $this->assertEquals(1, $mergerCalled, 'merger calltimes');
+  }
 
   protected function createTags() {
     $tags = array();
