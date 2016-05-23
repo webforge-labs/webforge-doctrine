@@ -2,6 +2,7 @@
 
 namespace Webforge\Doctrine\Test\Entities;
 
+use Doctrine\Common\Collections\Collection;
 use Webforge\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping AS ORM;
 
@@ -15,6 +16,7 @@ abstract class CompiledCategory {
   
   /**
    * id
+   * @var integer
    * @ORM\Id
    * @ORM\Column(type="integer")
    * @ORM\GeneratedValue
@@ -23,17 +25,14 @@ abstract class CompiledCategory {
   
   /**
    * posts
+   * @var Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post>
    * @ORM\ManyToMany(targetEntity="Webforge\Doctrine\Test\Entities\Post", mappedBy="categories")
-   * @ORM\JoinTable(name="posts2categories", joinColumns={@ORM\JoinColumn(name="posts_id", onDelete="cascade")}, inverseJoinColumns={@ORM\JoinColumn(name="categories_id", onDelete="cascade")})
+   * @ORM\JoinTable(name="posts2categories", joinColumns={@ORM\JoinColumn(name="post_id", onDelete="cascade")}, inverseJoinColumns={@ORM\JoinColumn(name="category_id", onDelete="cascade")})
    */
   protected $posts;
   
-  /**
-   * @param integer $id
-   */
-  public function setId($id) {
-    $this->id = $id;
-    return $this;
+  public function __construct() {
+    $this->posts = new ArrayCollection();
   }
   
   /**
@@ -44,10 +43,10 @@ abstract class CompiledCategory {
   }
   
   /**
-   * @param Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post> $posts
+   * @param integer $id
    */
-  public function setPosts(ArrayCollection $posts) {
-    $this->posts = $posts;
+  public function setId($id) {
+    $this->id = $id;
     return $this;
   }
   
@@ -58,6 +57,17 @@ abstract class CompiledCategory {
     return $this->posts;
   }
   
+  /**
+   * @param Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post> $posts
+   */
+  public function setPosts(Collection $posts) {
+    $this->posts = $posts;
+    return $this;
+  }
+  
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $post
+   */
   public function addPost(Post $post) {
     if (!$this->posts->contains($post)) {
         $this->posts->add($post);
@@ -65,6 +75,9 @@ abstract class CompiledCategory {
     return $this;
   }
   
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $post
+   */
   public function removePost(Post $post) {
     if ($this->posts->contains($post)) {
         $this->posts->removeElement($post);
@@ -72,11 +85,11 @@ abstract class CompiledCategory {
     return $this;
   }
   
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $post
+   * @return bool
+   */
   public function hasPost(Post $post) {
     return $this->posts->contains($post);
-  }
-  
-  public function __construct() {
-    $this->posts = new ArrayCollection();
   }
 }

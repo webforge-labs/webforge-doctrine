@@ -2,6 +2,7 @@
 
 namespace Webforge\Doctrine\Test\Entities;
 
+use Doctrine\Common\Collections\Collection;
 use Webforge\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping AS ORM;
 
@@ -15,22 +16,22 @@ abstract class CompiledAuthor extends User {
   
   /**
    * writtenPosts
+   * @var Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post>
    * @ORM\OneToMany(mappedBy="author", targetEntity="Webforge\Doctrine\Test\Entities\Post")
    */
   protected $writtenPosts;
   
   /**
    * revisionedPosts
+   * @var Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post>
    * @ORM\OneToMany(mappedBy="revisor", targetEntity="Webforge\Doctrine\Test\Entities\Post")
    */
   protected $revisionedPosts;
   
-  /**
-   * @param Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post> $writtenPosts
-   */
-  public function setWrittenPosts(ArrayCollection $writtenPosts) {
-    $this->writtenPosts = $writtenPosts;
-    return $this;
+  public function __construct($email) {
+    parent::__construct($email);
+    $this->writtenPosts = new ArrayCollection();
+    $this->revisionedPosts = new ArrayCollection();
   }
   
   /**
@@ -41,11 +42,39 @@ abstract class CompiledAuthor extends User {
   }
   
   /**
-   * @param Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post> $revisionedPosts
+   * @param Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post> $writtenPosts
    */
-  public function setRevisionedPosts(ArrayCollection $revisionedPosts) {
-    $this->revisionedPosts = $revisionedPosts;
+  public function setWrittenPosts(Collection $writtenPosts) {
+    $this->writtenPosts = $writtenPosts;
     return $this;
+  }
+  
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $writtenPost
+   */
+  public function addWrittenPost(Post $writtenPost) {
+    if (!$this->writtenPosts->contains($writtenPost)) {
+        $this->writtenPosts->add($writtenPost);
+    }
+    return $this;
+  }
+  
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $writtenPost
+   */
+  public function removeWrittenPost(Post $writtenPost) {
+    if ($this->writtenPosts->contains($writtenPost)) {
+        $this->writtenPosts->removeElement($writtenPost);
+    }
+    return $this;
+  }
+  
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $writtenPost
+   * @return bool
+   */
+  public function hasWrittenPost(Post $writtenPost) {
+    return $this->writtenPosts->contains($writtenPost);
   }
   
   /**
@@ -55,24 +84,17 @@ abstract class CompiledAuthor extends User {
     return $this->revisionedPosts;
   }
   
-  public function addWrittenPost(Post $writtenPost) {
-    if (!$this->writtenPosts->contains($writtenPost)) {
-        $this->writtenPosts->add($writtenPost);
-    }
+  /**
+   * @param Doctrine\Common\Collections\Collection<Webforge\Doctrine\Test\Entities\Post> $revisionedPosts
+   */
+  public function setRevisionedPosts(Collection $revisionedPosts) {
+    $this->revisionedPosts = $revisionedPosts;
     return $this;
   }
   
-  public function removeWrittenPost(Post $writtenPost) {
-    if ($this->writtenPosts->contains($writtenPost)) {
-        $this->writtenPosts->removeElement($writtenPost);
-    }
-    return $this;
-  }
-  
-  public function hasWrittenPost(Post $writtenPost) {
-    return $this->writtenPosts->contains($writtenPost);
-  }
-  
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $revisionedPost
+   */
   public function addRevisionedPost(Post $revisionedPost) {
     if (!$this->revisionedPosts->contains($revisionedPost)) {
         $this->revisionedPosts->add($revisionedPost);
@@ -80,6 +102,9 @@ abstract class CompiledAuthor extends User {
     return $this;
   }
   
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $revisionedPost
+   */
   public function removeRevisionedPost(Post $revisionedPost) {
     if ($this->revisionedPosts->contains($revisionedPost)) {
         $this->revisionedPosts->removeElement($revisionedPost);
@@ -87,13 +112,11 @@ abstract class CompiledAuthor extends User {
     return $this;
   }
   
+  /**
+   * @param Webforge\Doctrine\Test\Entities\Post $revisionedPost
+   * @return bool
+   */
   public function hasRevisionedPost(Post $revisionedPost) {
     return $this->revisionedPosts->contains($revisionedPost);
-  }
-  
-  public function __construct($email) {
-    parent::__construct($email);
-    $this->writtenPosts = new ArrayCollection();
-    $this->revisionedPosts = new ArrayCollection();
   }
 }

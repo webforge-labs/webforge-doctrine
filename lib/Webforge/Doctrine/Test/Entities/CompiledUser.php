@@ -14,6 +14,7 @@ abstract class CompiledUser {
   
   /**
    * id
+   * @var integer
    * @ORM\Id
    * @ORM\Column(type="integer")
    * @ORM\GeneratedValue
@@ -22,15 +23,28 @@ abstract class CompiledUser {
   
   /**
    * email
+   * @var string
    * @ORM\Column(length=210)
    */
   protected $email;
   
   /**
    * special
+   * @var string
    * @ORM\Column(nullable=true)
    */
   protected $special;
+  
+  public function __construct($email) {
+    $this->email = $email;
+  }
+  
+  /**
+   * @return integer
+   */
+  public function getId() {
+    return $this->id;
+  }
   
   /**
    * @param integer $id
@@ -41,10 +55,10 @@ abstract class CompiledUser {
   }
   
   /**
-   * @return integer
+   * @return string
    */
-  public function getId() {
-    return $this->id;
+  public function getEmail() {
+    return $this->email;
   }
   
   /**
@@ -58,8 +72,8 @@ abstract class CompiledUser {
   /**
    * @return string
    */
-  public function getEmail() {
-    return $this->email;
+  public function getSpecial() {
+    return $this->special;
   }
   
   /**
@@ -68,16 +82,5 @@ abstract class CompiledUser {
   public function setSpecial($special = NULL) {
     $this->special = $special;
     return $this;
-  }
-  
-  /**
-   * @return string
-   */
-  public function getSpecial() {
-    return $this->special;
-  }
-  
-  public function __construct($email) {
-    $this->email = $email;
   }
 }

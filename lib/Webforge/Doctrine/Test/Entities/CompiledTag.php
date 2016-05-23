@@ -14,6 +14,7 @@ abstract class CompiledTag {
   
   /**
    * id
+   * @var integer
    * @ORM\Id
    * @ORM\Column(type="integer")
    * @ORM\GeneratedValue
@@ -22,16 +23,13 @@ abstract class CompiledTag {
   
   /**
    * label
+   * @var string
    * @ORM\Column
    */
   protected $label;
   
-  /**
-   * @param integer $id
-   */
-  public function setId($id) {
-    $this->id = $id;
-    return $this;
+  public function __construct($label) {
+    $this->label = $label;
   }
   
   /**
@@ -42,10 +40,10 @@ abstract class CompiledTag {
   }
   
   /**
-   * @param string $label
+   * @param integer $id
    */
-  public function setLabel($label) {
-    $this->label = $label;
+  public function setId($id) {
+    $this->id = $id;
     return $this;
   }
   
@@ -56,7 +54,11 @@ abstract class CompiledTag {
     return $this->label;
   }
   
-  public function __construct($label) {
+  /**
+   * @param string $label
+   */
+  public function setLabel($label) {
     $this->label = $label;
+    return $this;
   }
 }
