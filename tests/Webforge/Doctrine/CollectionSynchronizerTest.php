@@ -134,10 +134,14 @@ class CollectionSynchronizerTest extends CollectionTestCase {
     $post = $this->createPost();
     $binaries = $this->createBinaries();
 
+    $path1 = $binaries[1]->getPath();
+    $path2 = $binaries[2]->getPath();
+    $path3 = $binaries[3]->getPath();
+
     $toCollection = Array(
-      (object) array('id'=>NULL, 'position'=>1, 'binary'=>(object) array('path'=>$path1 = $binaries[1]->getPath())), 
-      (object) array('id'=>NULL, 'position'=>2, 'binary'=>(object) array('path'=>$path2 = $binaries[2]->getPath())), 
-      (object) array('id'=>NULL, 'position'=>3, 'binary'=>(object) array('path'=>$path3 = $binaries[3]->getPath())), 
+      (object) array('id'=>NULL, 'position'=>1, 'binary'=>$binaries[1]), 
+      (object) array('id'=>NULL, 'position'=>2, 'binary'=>$binaries[2]), 
+      (object) array('id'=>NULL, 'position'=>3, 'binary'=>$binaries[3]), 
     );
 
     // in this example a PostImage is always unique for one post connected to one image
@@ -147,12 +151,6 @@ class CollectionSynchronizerTest extends CollectionTestCase {
     $dbImages = A::indexBy($dbImages, function($postImage) {
       return $postImage->getBinary()->getPath();
     });
-
-    // hydrate child-entities needed
-    $binariesByPath = A::indexBy($binaries, 'path');
-    foreach ($toCollection as $key => $image) {
-      $image->binary = $binariesByPath[$image->binary->path];
-    }
 
     $this->synchronizer->setHydrator(function($image) use (&$dbImages) {
       if (array_key_exists($image->binary->getPath(), $dbImages)) {
