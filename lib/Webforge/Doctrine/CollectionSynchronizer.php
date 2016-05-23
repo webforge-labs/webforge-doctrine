@@ -11,7 +11,7 @@ use Closure;
 use Doctrine\ORM\Mapping\ClassMetadata;
 
 /**
- * Synchronizes two collections (one hydrated from database, one given as a deteached $toCollection)
+ * Synchronizes two collections (one hydrated from database, one given as a detached $toCollection)
  * 
  * the $fromCollection is the previous selected set of entities
  * the $toCollection is a set of new entities. 
@@ -32,7 +32,7 @@ class CollectionSynchronizer {
   /**
    * @var Closure
    */
-  protected $adder, $remover, $setter, $merger;
+  protected $adder, $remover, $setter, $creater, $merger;
 
   protected $queryBuilder, $binds;
 
@@ -98,7 +98,7 @@ class CollectionSynchronizer {
    * @param $repository the entity repository for the entity in $fromCollection
    * @param $factory a factory to create inserted items in toCollection
    */
-  protected function __construct(EntityManager $em, EntityRepository $repository, EntityFactory $factory, Closure $adder = NULL, Closure $remover = NULL, Closure $setter = NULL, Closure $merger = NULL) {
+  protected function __construct(EntityManager $em, EntityRepository $repository, EntityFactory $factory, Closure $adder = NULL, Closure $remover = NULL, Closure $setter = NULL, Closure $merger = NULL, Closure $creater = NULL) {
     $this->em = $em;
     $this->repository = $repository;
     $this->factory = $factory;
@@ -139,6 +139,13 @@ class CollectionSynchronizer {
       };
     }
     $this->merger = $merger;
+
+    if (!isset($creater)) {
+      $creater = function($toObject, $entity, $toCollectionKey) use ($factory) {
+        return $factory->create($toObject);
+      };
+    }
+    $this->creater = $creater;
   }
 
   public function addUniqueConstraint(Array $fieldNames) {
@@ -155,12 +162,12 @@ class CollectionSynchronizer {
       $fromObject = $this->hydrateUniqueObject($toObject, $toCollectionKey, $entity);
       
       if ($fromObject === NULL) {
-        $inserts[] = $this->insert($entity, $toObject);
+        $inserts[] = $this->insert($entity, $toObject, $toCollectionKey);
 
         // inserts do not have to be indexed, they cannot be in $fromCollection (because fromCollection is from universe and hydrateUniqueObject searches in universe)
       } else {
         // an matching object was found by the data from $toObject
-        $updates[] = $this->merge($entity, $fromObject, $toObject);
+        $updates[] = $this->merge($entity, $fromObject, $toObject, $toCollectionKey);
         
         $index[$this->hashObject($fromObject)] = TRUE;
       }
@@ -178,12 +185,14 @@ class CollectionSynchronizer {
   /**
    * The object is not $fromCollection and new in $toCollection
    */
-  protected function insert($entity, $toObject) {
-    $insertedEntity = $this->factory->create($toObject);
+  protected function insert($entity, $toObject, $toCollectionKey) {
+    $creater = $this->creater;
+    $insertedEntity = $creater($toObject, $entity, $toCollectionKey);
+
     $this->em->persist($insertedEntity);
 
     $adder = $this->adder;
-    $adder($entity, $insertedEntity, $toObject);
+    $adder($entity, $insertedEntity, $toObject, $toCollectionKey);
   }
 
   /**
@@ -191,12 +200,12 @@ class CollectionSynchronizer {
    * 
    * notice that the element $fromObject does not necessariliy has to be already in the collection of $entity, because it is just hydrated from the universe
    */
-  protected function merge($entity, $fromObject, $toObject) {
+  protected function merge($entity, $fromObject, $toObject, $toCollectionKey) {
     $merge = $this->merger;
-    $merge($entity, $fromObject, $toObject);
+    $merge($entity, $fromObject, $toObject, $toCollectionKey);
 
     $adder = $this->adder;
-    $adder($entity, $fromObject, $toObject);
+    $adder($entity, $fromObject, $toObject, $toCollectionKey);
   }
 
   /**
@@ -237,6 +246,16 @@ class CollectionSynchronizer {
    */
   public function setAdder(Closure $adder) {
     $this->adder = $adder;
+  }
+
+  /**
+   * Set the create procedure
+   *
+   * creates a new entity for the collection
+   * @param Closure $creater function (stdClass $toObject, $entity) should return the entity for the collection of $entity created from $toObject
+   */
+  public function setCreater(Closure $creater) {
+    $this->creater = $creater;
   }
 
   /**

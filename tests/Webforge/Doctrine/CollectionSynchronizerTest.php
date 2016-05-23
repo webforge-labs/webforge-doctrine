@@ -5,6 +5,8 @@ namespace Webforge\Doctrine;
 use Webforge\Doctrine\Test\Entities\Post;
 use Webforge\Doctrine\Test\Entities\Author;
 use Webforge\Doctrine\Test\Entities\Tag;
+use Webforge\Doctrine\Test\Entities\PostImage;
+use Webforge\Common\ArrayUtil as A;
 
 class CollectionSynchronizerTest extends CollectionTestCase {
 
@@ -125,5 +127,100 @@ class CollectionSynchronizerTest extends CollectionTestCase {
     $this->assertEquals(2, $adderCalled, 'adder calltimes'); // one time: for the merger, second time for the adder
     $this->assertEquals(3, $removerCalled, 'remover calltimes');
     $this->assertEquals(1, $mergerCalled, 'merger calltimes');
+  }
+
+  public function testProcessingWithItemsWithAnOrderProperty() {
+    $this->resetDatabaseOnNextTest();
+    $post = $this->createPost();
+    $binaries = $this->createBinaries();
+
+    $toCollection = Array(
+      (object) array('id'=>NULL, 'position'=>1, 'binary'=>(object) array('path'=>$path1 = $binaries[1]->getPath())), 
+      (object) array('id'=>NULL, 'position'=>2, 'binary'=>(object) array('path'=>$path2 = $binaries[2]->getPath())), 
+      (object) array('id'=>NULL, 'position'=>3, 'binary'=>(object) array('path'=>$path3 = $binaries[3]->getPath())), 
+    );
+
+    // in this example a PostImage is always unique for one post connected to one image
+    // so the only dbimages we have, are in the toCollection
+    // this is a special form of an hydrator, which finds the toObject in the toCollection via LINQ-Query
+    $dbImages = $post->getImages()->toArray(); 
+    $dbImages = A::indexBy($dbImages, function($postImage) {
+      return $postImage->getBinary()->getPath();
+    });
+
+    // hydrate child-entities needed
+    $binariesByPath = A::indexBy($binaries, 'path');
+    foreach ($toCollection as $key => $image) {
+      $image->binary = $binariesByPath[$image->binary->path];
+    }
+
+    $this->synchronizer->setHydrator(function($image) use (&$dbImages) {
+      if (array_key_exists($image->binary->getPath(), $dbImages)) {
+        return $dbImages[$image->binary->getPath()];
+      }
+
+      return NULL;
+    });
+
+    $this->synchronizer->setCreater(function($image, $post) {
+      return new PostImage($image->binary, $post, $image->position);
+    });
+
+    $this->synchronizer->setAdder(function($post, $image) {
+      $post->addImage($image);
+    });
+
+    $this->synchronizer->process($post, $post->getImages(), $toCollection);
+
+    $post = $this->assertImagesOrdered($post, array($path1, $path2, $path3));
+    // note: after this $post is another object as $post before and we have CLEARED the entity-manager
+
+    // switch order by position
+    $toCollection[0]->position = 2;
+    $toCollection[1]->position = 1;
+
+    // refresh binaries (because we cleared em)
+    $binariesByPath = A::indexBy($this->em->getRepository(get_class($binaries[1]))->findAll(), 'path');
+    foreach ($toCollection as $key => $image) {
+      $image->binary = $binariesByPath[$image->binary->getPath()];
+    }
+
+    // refresh db index
+    $dbImages = $post->getImages()->toArray(); 
+    $dbImages = A::indexBy($dbImages, function($postImage) {
+      return $postImage->getBinary()->getPath();
+    });
+
+    $this->synchronizer->process($post, $post->getImages(), $toCollection);
+    $this->assertImagesOrdered($post, array($path2, $path1, $path3));
+  }
+
+  protected function assertImagesOrdered($post, array $paths) {
+    $post = $this->refresh($post);
+
+    $postImages = $post->getImages()->toArray();
+
+    $normalizedImages = array_values(
+      array_map(
+        function($image) {
+          return $image->getBinary()->getPath();
+        }, 
+
+        $postImages
+      )
+    );
+
+    foreach ($paths as $key => $path) {
+      $this->assertEquals($key+1, $postImages[$key]->getPosition(), 'Position for image: '.$path.' is wrong');
+    }
+
+    $this->assertEquals(
+      $paths,
+      $normalizedImages,
+      "the synchronized collection post.images does not match the expected\n".
+      implode(', ', $paths)."\n".
+      implode(', ', $normalizedImages)."\n"
+    );
+    return $post;
   }
 }

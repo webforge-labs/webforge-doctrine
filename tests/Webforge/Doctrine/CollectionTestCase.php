@@ -6,6 +6,8 @@ namespace Webforge\Doctrine;
 use Webforge\Doctrine\Test\Entities\Post;
 use Webforge\Doctrine\Test\Entities\Author;
 use Webforge\Doctrine\Test\Entities\Tag;
+use Webforge\Doctrine\Test\Entities\Binary;
+use Webforge\Doctrine\Test\Entities\PostImage;
 use Webforge\Common\DateTime\DateTime;
 use Webforge\Doctrine\Fixtures\EmptyFixture;
 
@@ -24,6 +26,17 @@ abstract class CollectionTestCase extends \Webforge\Doctrine\Test\DatabaseTestCa
     }
 
     return (object) $tags;
+  }
+
+  protected function createBinaries() {
+    $bins = array();
+    $key = 1;
+    foreach (array('gallery1/DSC0001.jpg', 'gallery1/DSC0002.jpg', 'gallery1/DSC0003.jpg') as $path) {
+      $bins[$key++] = $binary = new Binary($path);
+      $this->em->persist($binary);
+    }
+
+    return $bins;
   }
 
   protected function createPost() {
@@ -54,9 +67,7 @@ abstract class CollectionTestCase extends \Webforge\Doctrine\Test\DatabaseTestCa
   }
 
   protected function assertSynchronizedTags($post, array $tags) {
-    $this->em->flush();
-    $this->em->clear();
-    $post = $this->em->getRepository(get_class($post))->findOneBy(array('id'=>$post->getId()));
+    $post = $this->refresh($post);
 
     $normalizedTags = array_values(
       array_map(
@@ -75,4 +86,11 @@ abstract class CollectionTestCase extends \Webforge\Doctrine\Test\DatabaseTestCa
       implode(', ', $tags)."\n".
       implode(', ', $normalizedTags)."\n"
     );
-  }}
+  }
+
+  protected function refresh($post) {
+    $this->em->flush();
+    $this->em->clear();
+    return $this->em->getRepository(get_class($post))->findOneBy(array('id'=>$post->getId()));
+  }
+}

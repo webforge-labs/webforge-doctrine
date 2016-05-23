@@ -12,14 +12,17 @@
       "properties":{
         "id":{
           "name":"id",
+          "isEntityReference":false,
           "type":"Id"
         },
         "email":{
           "name":"email",
+          "isEntityReference":false,
           "type":"String"
         },
         "special":{
           "name":"special",
+          "isEntityReference":false,
           "type":"String"
         }
       }
@@ -35,38 +38,52 @@
       "properties":{
         "id":{
           "name":"id",
+          "isEntityReference":false,
           "type":"Id"
         },
         "author":{
           "name":"author",
+          "isEntityReference":true,
           "type":"Webforge\\Doctrine\\Test\\Entities\\Author",
           "isCollection":false
         },
         "revisor":{
           "name":"revisor",
+          "isEntityReference":true,
           "type":"Webforge\\Doctrine\\Test\\Entities\\Author",
           "isCollection":false
         },
         "categories":{
           "name":"categories",
+          "isEntityReference":true,
           "type":"Webforge\\Doctrine\\Test\\Entities\\Category",
           "isCollection":true
         },
         "tags":{
           "name":"tags",
+          "isEntityReference":true,
           "type":"Webforge\\Doctrine\\Test\\Entities\\Tag",
+          "isCollection":true
+        },
+        "images":{
+          "name":"images",
+          "isEntityReference":true,
+          "type":"Webforge\\Doctrine\\Test\\Entities\\PostImage",
           "isCollection":true
         },
         "active":{
           "name":"active",
+          "isEntityReference":false,
           "type":"Boolean"
         },
         "created":{
           "name":"created",
+          "isEntityReference":false,
           "type":"DateTime"
         },
         "modified":{
           "name":"modified",
+          "isEntityReference":false,
           "type":"DateTime"
         }
       }
@@ -82,11 +99,13 @@
       "properties":{
         "writtenPosts":{
           "name":"writtenPosts",
+          "isEntityReference":true,
           "type":"Webforge\\Doctrine\\Test\\Entities\\Post",
           "isCollection":true
         },
         "revisionedPosts":{
           "name":"revisionedPosts",
+          "isEntityReference":true,
           "type":"Webforge\\Doctrine\\Test\\Entities\\Post",
           "isCollection":true
         }
@@ -103,10 +122,12 @@
       "properties":{
         "id":{
           "name":"id",
+          "isEntityReference":false,
           "type":"Id"
         },
         "posts":{
           "name":"posts",
+          "isEntityReference":true,
           "type":"Webforge\\Doctrine\\Test\\Entities\\Post",
           "isCollection":true
         }
@@ -123,11 +144,67 @@
       "properties":{
         "id":{
           "name":"id",
+          "isEntityReference":false,
           "type":"Id"
         },
         "label":{
           "name":"label",
+          "isEntityReference":false,
           "type":"String"
+        }
+      }
+    },
+    {
+      "name":"Binary",
+      "fqn":"Webforge\\Doctrine\\Test\\Entities\\Binary",
+      "singular":"binary",
+      "plural":"binaries",
+      "tableName":"binaries",
+      "extends":null,
+      "description":null,
+      "properties":{
+        "id":{
+          "name":"id",
+          "isEntityReference":false,
+          "type":"Id"
+        },
+        "path":{
+          "name":"path",
+          "isEntityReference":false,
+          "type":"String"
+        }
+      }
+    },
+    {
+      "name":"PostImage",
+      "fqn":"Webforge\\Doctrine\\Test\\Entities\\PostImage",
+      "singular":"post-image",
+      "plural":"post-images",
+      "tableName":"post_images",
+      "extends":null,
+      "description":null,
+      "properties":{
+        "id":{
+          "name":"id",
+          "isEntityReference":false,
+          "type":"Id"
+        },
+        "position":{
+          "name":"position",
+          "isEntityReference":false,
+          "type":"Integer"
+        },
+        "post":{
+          "name":"post",
+          "isEntityReference":true,
+          "type":"Webforge\\Doctrine\\Test\\Entities\\Post",
+          "isCollection":false
+        },
+        "binary":{
+          "name":"binary",
+          "isEntityReference":true,
+          "type":"Webforge\\Doctrine\\Test\\Entities\\Binary",
+          "isCollection":false
         }
       }
     }

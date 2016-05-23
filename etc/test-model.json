@@ -26,6 +26,7 @@
         "revisor": { "type": "Author", "nullable": true },
         "categories": { "type": "Collection<Category>", "isOwning": true },
         "tags": { "type": "Collection<Tag>" },
+        "images": { "type": "Collection<PostImage>", "orderBy": { "position": "ASC" } },
         "active": { "type": "Boolean" },
         "created": { "type": "DateTime" },
         "modified": { "type": "DateTime", "nullable": true }
@@ -63,6 +64,31 @@
       },
 
       "constructor": ["label"]
+    },
+
+    {
+      "name": "Binary",
+    
+      "properties": {
+        "id": { "type": "DefaultId" },
+        "path": { "type": "String" }
+      },
+
+      "constructor": ["path"]
+    },
+
+    {
+      "name": "PostImage",
+    
+      "properties": {
+        "id": { "type": "DefaultId" },
+        "position": { "type": "Integer" },
+        "post": { "type": "Post" },
+
+        "binary": { "type": "Binary" }
+      },
+
+      "constructor": ["binary", "post", "position"]
     }
   ]
 }
