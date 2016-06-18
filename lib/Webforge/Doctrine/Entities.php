@@ -51,6 +51,14 @@ class Entities {
     $this->em->flush();
   }
 
+  public function clear() {
+    $this->em->clear();
+  }
+
+  public function remove($entity) {
+    $this->em->remove($entity);
+  }
+
   public function getRepository($entityName) {
     $entityFQN = $this->expandEntityName($entityName);
     return $this->em->getRepository($entityFQN);
