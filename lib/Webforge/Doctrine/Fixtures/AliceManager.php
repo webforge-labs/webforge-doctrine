@@ -3,6 +3,7 @@
 namespace Webforge\Doctrine\Fixtures;
 
 use Nelmio\Alice\Fixtures\Loader as AliceLoader;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class AliceManager {
@@ -47,31 +48,50 @@ class AliceManager {
     $configuration = $objectManager->getConfiguration();
 
     $connection->executeQuery('set foreign_key_checks = 0');
+
+    $classes = array();
     foreach ($objectManager->getMetadataFactory()->getAllMetadata() as $class) {
       if ($this->isTabledMetadata($class)) {
-        continue;
+        $classes[] = $class;
       }
+    }
 
+    foreach ($classes as $class) {
+      foreach ($class->associationMappings as $assoc) {
+        if ($assoc['isOwningSide'] && $assoc['type'] == ClassMetadata::MANY_TO_MANY) {
+          $assocTable = $this->getJoinTableName($assoc, $class, $platform, $configuration);
+          $connection->executeUpdate($platform->getTruncateTableSQL($assocTable, true));
+        }
+      }
+    }
+
+    foreach ($classes as $class) {
       $tbl = $this->getTableName($class, $platform, $configuration);
       $connection->executeUpdate($platform->getTruncateTableSQL($tbl, true));
     }
+
     $connection->executeQuery('set foreign_key_checks = 1');
   }
 
+  /**
+   * Returns true if the class is metadata for an entity that has an acutal table in the db
+   * @param ClassMetadata $class
+   * @return boolean
+   */
   private function isTabledMetadata($class) {
     if (isset($class->isEmbeddedClass) && $class->isEmbeddedClass) {
-      return TRUE;
+      return FALSE;
     }
 
     if ($class->isMappedSuperclass) {
-      return TRUE;
+      return FALSE;
     }
     
     if ($class->isInheritanceTypeSingleTable() && $class->name !== $class->rootEntityName) {
-      return TRUE;
+      return FALSE;
     }
 
-    return FALSE;
+    return TRUE;
   }
 
   /**
@@ -86,4 +106,19 @@ class AliceManager {
     }
     return $configuration->getQuoteStrategy()->getTableName($class, $platform);
   }
+
+ /**
+   *
+   * @param array            $association
+   * @param \Doctrine\ORM\Mapping\ClassMetadata    $class
+   * @param \Doctrine\DBAL\Platforms\AbstractPlatform $platform
+   * @return string
+   */
+  private function getJoinTableName($assoc, $class, $platform, $configuration) {
+    if (isset($assoc['joinTable']['schema']) && !method_exists($class, 'getSchemaName')) {
+      return $assoc['joinTable']['schema'].'.'.$configuration->getQuoteStrategy()->getJoinTableName($assoc, $class, $platform);
+    }
+
+    return $configuration->getQuoteStrategy()->getJoinTableName($assoc, $class, $platform);
+  }  
 }
