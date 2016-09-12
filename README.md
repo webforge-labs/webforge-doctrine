@@ -17,6 +17,12 @@ to run the tests use:
 phpunit
 ```
 
+## upgrade
+
+### to 1.3.x:
+
+Read the notes to upgrade to doctrine 2.5.x
+
 ## usage
 
 Start off with the instantiation of the `Webforge\Doctrine\Container`.
