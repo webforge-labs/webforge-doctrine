@@ -28,6 +28,7 @@ class AliceManager {
     }
 
     $persister = new \Nelmio\Alice\Persister\Doctrine($objectManager, $doFlush = FALSE);
+    $this->loader->setPersister($persister);
 
     $output->writeln('persisting...');
     foreach ($files as $file) {
